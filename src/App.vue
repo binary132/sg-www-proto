@@ -1,10 +1,10 @@
 <template>
   <div id="app">
 
-    <backend-test
-     backend="/v1"
-     :port-number="8080">
-    </backend-test>
+    <view></view>
+
+    <command-bar></command-bar>
+
   </div>
 </template>
 
@@ -14,19 +14,20 @@ import VueResource from 'vue-resource'
 
 Vue.use(VueResource)
 
-import backendTest from './components/backendTest'
+import view from './components/view'
+import commandBar from './components/commandBar'
 
 export default {
   name: 'app',
   components: {
-    backendTest
+    view,
+    commandBar
   }
 }
 </script>
 
 <style>
 #app{
-  width: 500px;
   margin: auto;
 }
 </style>
