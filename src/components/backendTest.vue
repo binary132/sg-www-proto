@@ -7,14 +7,14 @@
 <!-- TEMPLATE -->
 <template>
   <div class="backend-test component-meta">
-    <h2>Server Source Check</h2>
-    <div>
+    <h3>Server Source Check</h3>
+    <div class="server-source-check">
       {{serverSource}}
     </div>
 
     <hr>
 
-    <h2>Admin Access</h2>
+    <h3>Admin Access</h3>
     <div class="outline">
       <p>Incept Ticket » {{ticket}}</p>
       <div class="input-group">
@@ -33,7 +33,7 @@
 
     <hr>
 
-    <h2>User Access</h2>
+    <h3>User Access</h3>
     <div class="outline">
       <div class="input-group">
         <input name='usn' placeholder='username' v-model='usnEntry'>
@@ -43,6 +43,39 @@
       <h4 v-bind:class="['api-response', loginResponseOK ? 'good' : 'bad']">{{loginResponse}}</h4>
       <h3 v-if='sessionToken'>User: {{username}}, Coin: {{coin}}</h3>
     </div>
+
+    <hr>
+
+    <h3>Websocket Tests</h3>
+    <div class="outline">
+
+      <h4>Stream Lister</h4>
+      <div class="stream-list">
+        <div class="input-group">
+          <ul>
+            <li v-for="(stream, index) in userStreams">
+              <span v-on:click='setActiveStream(index)' v-bind:class="['stream-item', index === activeStream ? 'active' : '']">
+                {{stream.name}}
+                <span v-if='index === activeStream'> (Active)</span>
+              </span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <h4>Stream Creator</h4>
+      <div class="input-group">
+        <input name='streamname' placeholder='Stream Name' v-model='streamNameEntry'>
+        <input name='streammembers' placeholder='Stream Members' v-model='streamMemberEntry'>
+      </div>
+      <button v-on:click='createStream()'>Create Stream</button>
+      <h4 v-bind:class="['api-response', loginResponseOK ? 'good' : 'bad']">{{loginResponse}}</h4>
+      <h3 v-if='sessionToken'>User: {{username}}, Coin: {{coin}}</h3>
+
+      <h4>Stream Reader A</h4>
+
+    </div>
+
   </div>
 </template>
 
@@ -65,8 +98,18 @@ export default {
       usnEntry: '',
       cPwdEntry: '',
       pwdEntry: '',
+
+      streamNameEntry: '',
+      streamMemberEntry: '',
+      userStreams: [],
+      streamMessagesA: [],
+      streamMessagesB: [],
+      websocketA: null,
+      websocketB: null,
+
       sessionToken: '',
       ticket: '',
+      activeStream: 0,
       aakResponse: 'Waiting for server event...',
       aakResponseOK: true,
       createResponse: 'Waiting for server event...',
@@ -123,6 +166,28 @@ export default {
       this.cpwdEntry = ''
     },
 
+    createStream: function () {
+      this.$http.post(
+        this.backend + '/streams', {
+          'name': this.streamNameEntry,
+          'readers': {[this.streamMemberEntry]: true},
+          'writers': {[this.streamMemberEntry]: true}
+        }, {headers: {'Authorization': 'Bearer ' + this.sessionToken}}).then((response) => {
+          let stream = JSON.parse(response.body)
+          console.log(stream)
+          this.createResponseOK = true
+          this.createResponse = 'Successfully created stream ' + stream.name
+          this.userStreams.push(stream)
+        }, (err) => {
+          console.log('Failed to create stream (POST to /streams): ' + JSON.stringify(err))
+          this.createResponseOK = false
+          this.createResponse = 'Failed to create stream.'
+        })
+
+      this.streamNameEntry = ''
+      this.streamMemberEntry = ''
+    },
+
     submitLogin: function () {
       this.$http.post(this.backend + '/tokens', {'name': this.usnEntry, 'pwhash': this.pwhash}).then((response) => {
         console.log(JSON.parse(response.body))
@@ -131,12 +196,45 @@ export default {
         this.loginResponseOK = true
         this.loginResponse = 'Successfully logged-in'
         this.getProfile()
+        this.getStreams()
         this.clearFields()
       }, (err) => {
         console.log('Failed to log-in (POST to /token): ' + JSON.stringify(err))
         this.loginResponseOK = false
         this.loginResponse = 'Failed to log-in'
       })
+    },
+
+    getStreams: function () {
+      this.$http.get(this.backend + '/streams', {headers: {'Authorization': 'Bearer ' + this.sessionToken}}).then((response) => {
+        console.log(JSON.parse(response.body))
+        this.userStreams = JSON.parse(response.body)
+      }, (err) => {
+        console.log('Failed to get streams (GET to /streams): ' + JSON.stringify(err))
+      })
+    },
+
+    setActiveStream: function (index) {
+      this.activeStream = index
+
+      // Websocket Stuff
+      this.websocketA = new window.WebSocket(
+        'ws://' + window.location.host + this.backend +
+          '/streams/' + this.userStreams[index] + '/start',
+        {'options': {'headers': {'Authorization': 'Bearer ' + this.sessionToken}}}
+      )
+      this.websocketA.onopen = function () {
+        console.log('Websocket A Connection Established.')
+      }
+
+      this.websocketB = new window.WebSocket(
+        'ws://' + window.location.host + this.backend +
+          '/streams/' + this.userStreams[index] + '/start',
+        {'options': {'headers': {'Authorization': 'Bearer ' + this.sessionToken}}}
+      )
+      this.websocketB.onopen = function () {
+        console.log('Websocket B Connection Established.')
+      }
     },
 
     getProfile: function () {
@@ -176,6 +274,15 @@ export default {
 
 <!-- STYLE -->
 <style scoped>
+.stream-item{
+
+}
+.stream-item.active{
+  color: #60a060;
+}
+.server-source-check{
+  font-size: 0.7em;
+}
 .api-response{
   text-align: center;
   font-weight: 100;
