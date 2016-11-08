@@ -19,8 +19,8 @@
 <!-- STYLE -->
 <style>
 #main-view{
-  background: #a0a0a0;
-  width: 100vw;
+  background: #383230;
+  width: 100%;
   height: 100vh;
 }
 </style>
