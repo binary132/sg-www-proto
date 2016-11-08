@@ -8,13 +8,19 @@
 <template><div id="cmdbar">
   <input
     name='cmd'
-    ng-trim="false"
+    ng-trim='false'
     v-model='trueEntry'
     @keydown.enter='submitOnEnter()'>
-  <div id="composite-entry">
-    <span id="painted-entry">&gt; {{ trueEntry }}</span><span id="ghost-entry">{{ ghostEntry }}</span>
+  <div id="history">
+    <ul>
+      <li v-for='cmd in commandLog' class="history-item">
+        {{ cmd }}
+      </li>
+    </ul>
   </div>
-  <!-- <div id="enter-arrow">&gt;</div> -->
+  <div id="composite-entry">
+    <span id="painted-entry">&gt; {{ trueEntry }}</span><span id="cursor"></span><span id="ghost-entry">{{ ghostEntry }}</span>
+  </div>
 </div></template>
 
 
@@ -24,7 +30,8 @@
 export default {
   data () {
     return {
-      trueEntry: ''
+      trueEntry: '',
+      commandLog: []
     }
   },
 
@@ -39,6 +46,7 @@ export default {
   methods: {
     submitOnEnter: function () {
       if (this.trueEntry.length > 0) {
+        this.commandLog.push(this.trueEntry)
         this.trueEntry = ''
       }
     }
@@ -63,11 +71,9 @@ export default {
 }
 
 input{
-  color: #00f;
   font-family: inherit;
   width: calc(100% - 3em);
   height: 100%;
-  background: none;
   padding: 0em 1em 0em 2em;
   border-radius: 2em;
   box-shadow: 0px 1px 0px #807878 inset;
@@ -93,27 +99,44 @@ input:focus{
   left: 1em;
   pointer-events: none;
   width: 90%;
-  opacity: 0.3;
 }
 input:focus ~ #composite-entry{
-  opacity: 1.0;
 }
 #painted-entry{
 }
 #ghost-entry{
   opacity: 0.3;
 }
-
-#enter-arrow{
-  position: absolute;
-  top: 0.2em;
-  left: 0.6em;
-  font-size: 1.5em;
-  opacity: 0.2;
+#cursor::after{
+  content: "|";
+  position: relative;
+  display: inline-block;
+  width: 0;
+  left: -0.25em;
+  animation: blink 800ms infinite;
+}
+@keyframes blink{
+  0% { opacity: 1; }
+  50% { opacity: 0; }
+  100% { opacity: 1; }
 }
 
-input:focus ~ #enter-arrow{
-  opacity: 1.0;
+#history{
+  position: absolute;
+  bottom: 1.5em;
+  left: -1em;
+  pointer-events: none;
+  color: #a97;
+}
+.history-item{
+  list-style: none;
+  animation: historyFade 5000ms 1;
+  animation-timing-function: ease-in;
+  opacity: 0.0;
+}
+@keyframes historyFade{
+  from { opacity: 1; display: visible; }
+  to { opacity: 0; display: none; }
 }
 
 </style>
