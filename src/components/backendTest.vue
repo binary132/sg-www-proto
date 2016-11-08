@@ -254,12 +254,16 @@ export default {
       //   this.websocketB.close()
       // }
 
-      // Create new websockets
+      // Create new websockets:
+      //   Token = base64 string => bits => unpadded base64url string
+      //   WS auth token: protocol = 'Bearer+{Token}'
+      let tokenBits = sjcl.codec.base64.toBits(this.sessionToken)
+      let tokenURL = sjcl.codec.base64url.fromBits(tokenBits)
+
       var ws = new window.WebSocket(
         'ws://' + window.location.host + this.backend +
           '/streams/' + this.userStreams[index].id + '/start',
-        // ['Bearer ' + this.sessionToken]
-        [encodeURI(this.sessionToken)]
+          'Bearer+' + tokenURL
       )
       ws.onopen = function () {
         console.log('Websocket A Connection Established.')
@@ -271,8 +275,7 @@ export default {
       this.websocketB = new window.WebSocket(
         'ws://' + window.location.host + this.backend +
           '/streams/' + this.userStreams[index].id + '/start',
-        // ['Bearer ' + this.sessionToken]
-        ['blah']
+        'Bearer+' + tokenURL
       )
       this.websocketB.onopen = function () {
         console.log('Websocket B Connection Established.')
