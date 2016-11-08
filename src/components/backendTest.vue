@@ -69,13 +69,24 @@
         <input name='streammembers' placeholder='Stream Members' v-model='streamMemberEntry'>
       </div>
       <button v-on:click='createStream()'>Create Stream</button>
-      <h4 v-bind:class="['api-response', loginResponseOK ? 'good' : 'bad']">{{loginResponse}}</h4>
+      <h4 v-bind:class="['api-response', streamResponseOK ? 'good' : 'bad']">{{streamResponse}}</h4>
       <h3 v-if='sessionToken'>User: {{username}}, Coin: {{coin}}</h3>
 
-      <h4>Stream Reader A</h4>
+      <div class="stream-messages">
+        <div>
+          <h4>Stream Reader A ({{ websocketA.readyState }})</h4>
+          <button v-on:click='socketASend()' v-bind:disabled="websocketA.readyState !== 'OPEN'">Send Message</button>
+          <p v-for="msg in streamMessagesA">{{ msg }}</p>
+        </div>
+
+        <div>
+          <h4>Stream Reader B ({{ websocketA.readyState }})</h4>
+          <button v-on:click='socketBSend()' v-bind:disabled="websocketA.readyState !== 'OPEN'">Send Message</button>
+          <p v-for="msg in streamMessagesB">{{ msg }}</p>
+        </div>
+      </div>
 
     </div>
-
   </div>
 </template>
 
@@ -104,8 +115,8 @@ export default {
       userStreams: [],
       streamMessagesA: [],
       streamMessagesB: [],
-      websocketA: null,
-      websocketB: null,
+      websocketA: {readyState: 'N/A'},
+      websocketB: {readyState: 'N/A'},
 
       sessionToken: '',
       ticket: '',
@@ -116,6 +127,8 @@ export default {
       createResponseOK: true,
       loginResponse: 'Waiting for server event...',
       loginResponseOK: true,
+      streamResponse: 'Waiting for server event...',
+      streamResponseOK: true,
       serverSource: 'Requesting server source...'
     }
   },
@@ -166,6 +179,20 @@ export default {
       this.cpwdEntry = ''
     },
 
+    socketASend: function () {
+      this.websocketA.send('Hello from Member A.')
+    },
+    socketBSend: function () {
+      this.websocketB.send('Hey from Member B!')
+    },
+
+    socketAReceive: function (event) {
+      this.streamMessagesA.push(event.data)
+    },
+    socketBReceive: function (event) {
+      this.streamMessagesB.push(event.data)
+    },
+
     createStream: function () {
       this.$http.post(
         this.backend + '/streams', {
@@ -175,13 +202,13 @@ export default {
         }, {headers: {'Authorization': 'Bearer ' + this.sessionToken}}).then((response) => {
           let stream = JSON.parse(response.body)
           console.log(stream)
-          this.createResponseOK = true
-          this.createResponse = 'Successfully created stream ' + stream.name
+          this.streamResponseOK = true
+          this.streamResponse = 'Successfully created stream ' + stream.name
           this.userStreams.push(stream)
         }, (err) => {
           console.log('Failed to create stream (POST to /streams): ' + JSON.stringify(err))
-          this.createResponseOK = false
-          this.createResponse = 'Failed to create stream.'
+          this.streamResponseOK = false
+          this.streamResponse = 'Failed to create stream.'
         })
 
       this.streamNameEntry = ''
@@ -215,26 +242,42 @@ export default {
     },
 
     setActiveStream: function (index) {
+      // If re-selected current stream, just return
+      if (index === this.activeStream) return
       this.activeStream = index
 
-      // Websocket Stuff
-      this.websocketA = new window.WebSocket(
+      // Close old websockets
+      // if (this.websocketA !== null) {
+      //   this.websocketA.close()
+      // }
+      // if (this.websocketB !== null) {
+      //   this.websocketB.close()
+      // }
+
+      // Create new websockets
+      var ws = new window.WebSocket(
         'ws://' + window.location.host + this.backend +
-          '/streams/' + this.userStreams[index] + '/start',
-        {'options': {'headers': {'Authorization': 'Bearer ' + this.sessionToken}}}
+          '/streams/' + this.userStreams[index].id + '/start',
+        // ['Bearer ' + this.sessionToken]
+        [encodeURI(this.sessionToken)]
       )
-      this.websocketA.onopen = function () {
+      ws.onopen = function () {
         console.log('Websocket A Connection Established.')
       }
+      ws.onmessage = this.socketAReceive
+      console.log('created websocket A')
+      this.websocketA = ws
 
       this.websocketB = new window.WebSocket(
         'ws://' + window.location.host + this.backend +
-          '/streams/' + this.userStreams[index] + '/start',
-        {'options': {'headers': {'Authorization': 'Bearer ' + this.sessionToken}}}
+          '/streams/' + this.userStreams[index].id + '/start',
+        // ['Bearer ' + this.sessionToken]
+        ['blah']
       )
       this.websocketB.onopen = function () {
         console.log('Websocket B Connection Established.')
       }
+      this.websocketB.onmessage = this.socketBReceive
     },
 
     getProfile: function () {
@@ -274,6 +317,20 @@ export default {
 
 <!-- STYLE -->
 <style scoped>
+.stream-messages{
+  display: flex;
+}
+.stream-messages div{
+  width: 100%;
+}
+.stream-messages p{
+  font-size: 0.8em;
+  line-height: 1.5em;
+  margin: 0;
+}
+.stream-messages p:nth-of-type(even){
+  background: #f0f0f0;
+}
 .stream-item{
 
 }
