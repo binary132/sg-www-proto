@@ -74,14 +74,14 @@
 
       <div class="stream-messages">
         <div>
-          <h4>Stream Reader A ({{ websocketA.readyState }})</h4>
-          <button v-on:click='socketASend()' v-bind:disabled="websocketA.readyState !== 'OPEN'">Send Message</button>
+          <h4>Stream Reader A ({{ websocketAReady }})</h4>
+          <button v-show='websocketAReady' v-on:click='socketASend()'>Send Message</button>
           <p v-for="msg in streamMessagesA">{{ msg }}</p>
         </div>
 
         <div>
-          <h4>Stream Reader B ({{ websocketA.readyState }})</h4>
-          <button v-on:click='socketBSend()' v-bind:disabled="websocketA.readyState !== 'OPEN'">Send Message</button>
+          <h4>Stream Reader B ({{ websocketBReady }})</h4>
+          <button v-show='websocketBReady' v-on:click='socketBSend()'>Send Message</button>
           <p v-for="msg in streamMessagesB">{{ msg }}</p>
         </div>
       </div>
@@ -115,8 +115,8 @@ export default {
       userStreams: [],
       streamMessagesA: [],
       streamMessagesB: [],
-      websocketA: {readyState: 'N/A'},
-      websocketB: {readyState: 'N/A'},
+      websocketA: null,
+      websocketB: null,
 
       sessionToken: '',
       ticket: '',
@@ -140,6 +140,19 @@ export default {
 
     pwhash: function () {
       return sjcl.codec.base64.fromBits(sjcl.hash.sha256.hash(this.pwdEntry))
+    },
+
+    websocketAReady: function () {
+      if (this.websocketA === null) {
+        return false
+      }
+      return true
+    },
+    websocketBReady: function () {
+      if (this.websocketB === null) {
+        return false
+      }
+      return true
     }
   },
 
@@ -260,18 +273,19 @@ export default {
       let tokenBits = sjcl.codec.base64.toBits(this.sessionToken)
       let tokenURL = sjcl.codec.base64url.fromBits(tokenBits)
 
-      var ws = new window.WebSocket(
+      // Websocket A
+      this.websocketA = new window.WebSocket(
         'ws://' + window.location.host + this.backend +
           '/streams/' + this.userStreams[index].id + '/start',
           'Bearer+' + tokenURL
       )
-      ws.onopen = function () {
+      this.websocketA.onopen = function () {
         console.log('Websocket A Connection Established.')
       }
-      ws.onmessage = this.socketAReceive
+      this.websocketA.onmessage = this.socketAReceive
       console.log('created websocket A')
-      this.websocketA = ws
 
+      // Websocket B
       this.websocketB = new window.WebSocket(
         'ws://' + window.location.host + this.backend +
           '/streams/' + this.userStreams[index].id + '/start',
@@ -281,6 +295,7 @@ export default {
         console.log('Websocket B Connection Established.')
       }
       this.websocketB.onmessage = this.socketBReceive
+      console.log('created websocket B')
     },
 
     getProfile: function () {
@@ -344,6 +359,7 @@ export default {
   font-size: 0.7em;
 }
 .api-response{
+  margin-top: 0.33em;
   text-align: center;
   font-weight: 100;
   font-size: 0.8em;
