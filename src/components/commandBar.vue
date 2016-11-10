@@ -13,9 +13,13 @@
     @keydown.enter='submitOnEnter()'>
   <div id="history">
     <ul>
-      <li v-for='cmd in commandLog' class="history-item">
-        {{ cmd }}
-      </li>
+      <!-- <transition name="command-log"> -->
+        <li v-for='(cmd, index) in commandLog'
+        class="history-item"
+        :style="'opacity: ' + 0.166*(index+1) + ';'">
+          {{ cmd }}
+        </li>
+      <!-- </transition> -->
     </ul>
   </div>
   <div id="composite-entry">
@@ -47,6 +51,9 @@ export default {
     submitOnEnter: function () {
       if (this.trueEntry.length > 0) {
         this.commandLog.push(this.trueEntry)
+        if (this.commandLog.length > 5) {
+          this.commandLog.shift()
+        }
         this.trueEntry = ''
       }
     }
@@ -130,10 +137,11 @@ input:focus ~ #composite-entry{
 }
 .history-item{
   list-style: none;
-  animation: historyFade 5000ms 1;
+  /*animation: historyFade 5000ms 1;
   animation-timing-function: ease-in;
-  opacity: 0.0;
+  opacity: 0.0;*/
 }
+
 @keyframes historyFade{
   from { opacity: 1; display: visible; }
   to { opacity: 0; display: none; }

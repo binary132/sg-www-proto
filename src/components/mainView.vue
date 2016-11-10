@@ -41,5 +41,6 @@ export default {
   width: 500px;
   height: 75vh;
   margin: auto;
+  color: #e0d8d0;
 }
 </style>
