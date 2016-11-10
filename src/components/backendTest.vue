@@ -7,14 +7,14 @@
 <!-- TEMPLATE -->
 <template>
   <div class="backend-test component-meta">
-    <h2>Server Source Check</h2>
-    <div>
+    <h3>Server Source Check</h3>
+    <div class="server-source-check">
       {{serverSource}}
     </div>
 
     <hr>
 
-    <h2>Admin Access</h2>
+    <h3>Admin Access</h3>
     <div class="outline">
       <p>Incept Ticket » {{ticket}}</p>
       <div class="input-group">
@@ -33,7 +33,7 @@
 
     <hr>
 
-    <h2>User Access</h2>
+    <h3>User Access</h3>
     <div class="outline">
       <div class="input-group">
         <input name='usn' placeholder='username' v-model='usnEntry'>
@@ -42,6 +42,50 @@
       <button v-on:click='submitLogin()'>Log-in</button>
       <h4 v-bind:class="['api-response', loginResponseOK ? 'good' : 'bad']">{{loginResponse}}</h4>
       <h3 v-if='sessionToken'>User: {{username}}, Coin: {{coin}}</h3>
+    </div>
+
+    <hr>
+
+    <h3>Websocket Tests</h3>
+    <div class="outline">
+
+      <h4>Stream Lister</h4>
+      <div class="stream-list">
+        <div class="input-group">
+          <ul>
+            <li v-for="(stream, index) in userStreams">
+              <span v-on:click='setActiveStream(index)' v-bind:class="['stream-item', index === activeStream ? 'active' : '']">
+                {{stream.name}}
+                <span v-if='index === activeStream'> (Active)</span>
+              </span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <h4>Stream Creator</h4>
+      <div class="input-group">
+        <input name='streamname' placeholder='Stream Name' v-model='streamNameEntry'>
+        <input name='streammembers' placeholder='Stream Members' v-model='streamMemberEntry'>
+      </div>
+      <button v-on:click='createStream()'>Create Stream</button>
+      <h4 v-bind:class="['api-response', streamResponseOK ? 'good' : 'bad']">{{streamResponse}}</h4>
+      <h3 v-if='sessionToken'>User: {{username}}, Coin: {{coin}}</h3>
+
+      <div class="stream-messages">
+        <div>
+          <h4>Stream Reader A ({{ websocketAReady }})</h4>
+          <button v-show='websocketAReady' v-on:click='socketASend()'>Send Message</button>
+          <p v-for="msg in streamMessagesA">{{ msg }}</p>
+        </div>
+
+        <div>
+          <h4>Stream Reader B ({{ websocketBReady }})</h4>
+          <button v-show='websocketBReady' v-on:click='socketBSend()'>Send Message</button>
+          <p v-for="msg in streamMessagesB">{{ msg }}</p>
+        </div>
+      </div>
+
     </div>
   </div>
 </template>
@@ -65,14 +109,26 @@ export default {
       usnEntry: '',
       cPwdEntry: '',
       pwdEntry: '',
+
+      streamNameEntry: '',
+      streamMemberEntry: '',
+      userStreams: [],
+      streamMessagesA: [],
+      streamMessagesB: [],
+      websocketA: null,
+      websocketB: null,
+
       sessionToken: '',
       ticket: '',
+      activeStream: 0,
       aakResponse: 'Waiting for server event...',
       aakResponseOK: true,
       createResponse: 'Waiting for server event...',
       createResponseOK: true,
       loginResponse: 'Waiting for server event...',
       loginResponseOK: true,
+      streamResponse: 'Waiting for server event...',
+      streamResponseOK: true,
       serverSource: 'Requesting server source...'
     }
   },
@@ -84,6 +140,19 @@ export default {
 
     pwhash: function () {
       return sjcl.codec.base64.fromBits(sjcl.hash.sha256.hash(this.pwdEntry))
+    },
+
+    websocketAReady: function () {
+      if (this.websocketA === null) {
+        return false
+      }
+      return true
+    },
+    websocketBReady: function () {
+      if (this.websocketB === null) {
+        return false
+      }
+      return true
     }
   },
 
@@ -123,6 +192,42 @@ export default {
       this.cpwdEntry = ''
     },
 
+    socketASend: function () {
+      this.websocketA.send('Hello from Member A.')
+    },
+    socketBSend: function () {
+      this.websocketB.send('Hey from Member B!')
+    },
+
+    socketAReceive: function (event) {
+      this.streamMessagesA.push(event.data)
+    },
+    socketBReceive: function (event) {
+      this.streamMessagesB.push(event.data)
+    },
+
+    createStream: function () {
+      this.$http.post(
+        this.backend + '/streams', {
+          'name': this.streamNameEntry,
+          'readers': {[this.streamMemberEntry]: true},
+          'writers': {[this.streamMemberEntry]: true}
+        }, {headers: {'Authorization': 'Bearer ' + this.sessionToken}}).then((response) => {
+          let stream = JSON.parse(response.body)
+          console.log(stream)
+          this.streamResponseOK = true
+          this.streamResponse = 'Successfully created stream ' + stream.name
+          this.userStreams.push(stream)
+        }, (err) => {
+          console.log('Failed to create stream (POST to /streams): ' + JSON.stringify(err))
+          this.streamResponseOK = false
+          this.streamResponse = 'Failed to create stream.'
+        })
+
+      this.streamNameEntry = ''
+      this.streamMemberEntry = ''
+    },
+
     submitLogin: function () {
       this.$http.post(this.backend + '/tokens', {'name': this.usnEntry, 'pwhash': this.pwhash}).then((response) => {
         console.log(JSON.parse(response.body))
@@ -131,12 +236,66 @@ export default {
         this.loginResponseOK = true
         this.loginResponse = 'Successfully logged-in'
         this.getProfile()
+        this.getStreams()
         this.clearFields()
       }, (err) => {
         console.log('Failed to log-in (POST to /token): ' + JSON.stringify(err))
         this.loginResponseOK = false
         this.loginResponse = 'Failed to log-in'
       })
+    },
+
+    getStreams: function () {
+      this.$http.get(this.backend + '/streams', {headers: {'Authorization': 'Bearer ' + this.sessionToken}}).then((response) => {
+        console.log(JSON.parse(response.body))
+        this.userStreams = JSON.parse(response.body)
+      }, (err) => {
+        console.log('Failed to get streams (GET to /streams): ' + JSON.stringify(err))
+      })
+    },
+
+    setActiveStream: function (index) {
+      // If re-selected current stream, just return
+      if (index === this.activeStream) return
+      this.activeStream = index
+
+      // Close old websockets
+      // if (this.websocketA !== null) {
+      //   this.websocketA.close()
+      // }
+      // if (this.websocketB !== null) {
+      //   this.websocketB.close()
+      // }
+
+      // Create new websockets:
+      //   Token = base64 string => bits => unpadded base64url string
+      //   WS auth token: protocol = 'Bearer+{Token}'
+      let tokenBits = sjcl.codec.base64.toBits(this.sessionToken)
+      let tokenURL = sjcl.codec.base64url.fromBits(tokenBits)
+
+      // Websocket A
+      this.websocketA = new window.WebSocket(
+        'ws://' + window.location.host + this.backend +
+          '/streams/' + this.userStreams[index].id + '/start',
+          'Bearer+' + tokenURL
+      )
+      this.websocketA.onopen = function () {
+        console.log('Websocket A Connection Established.')
+      }
+      this.websocketA.onmessage = this.socketAReceive
+      console.log('created websocket A')
+
+      // Websocket B
+      this.websocketB = new window.WebSocket(
+        'ws://' + window.location.host + this.backend +
+          '/streams/' + this.userStreams[index].id + '/start',
+        'Bearer+' + tokenURL
+      )
+      this.websocketB.onopen = function () {
+        console.log('Websocket B Connection Established.')
+      }
+      this.websocketB.onmessage = this.socketBReceive
+      console.log('created websocket B')
     },
 
     getProfile: function () {
@@ -176,7 +335,31 @@ export default {
 
 <!-- STYLE -->
 <style scoped>
+.stream-messages{
+  display: flex;
+}
+.stream-messages div{
+  width: 100%;
+}
+.stream-messages p{
+  font-size: 0.8em;
+  line-height: 1.5em;
+  margin: 0;
+}
+.stream-messages p:nth-of-type(even){
+  background: #f0f0f0;
+}
+.stream-item{
+
+}
+.stream-item.active{
+  color: #60a060;
+}
+.server-source-check{
+  font-size: 0.7em;
+}
 .api-response{
+  margin-top: 0.33em;
   text-align: center;
   font-weight: 100;
   font-size: 0.8em;
