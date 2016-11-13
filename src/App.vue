@@ -22,8 +22,6 @@ import metaPalette from './components/metaPalette'
 
 import store from './store/store'
 
-import testData from './assets/testData'
-
 export default {
   name: 'app',
 
@@ -31,10 +29,6 @@ export default {
     mainView,
     commandBar,
     metaPalette
-  },
-
-  data: {
-    testData
   },
 
   store

@@ -7,13 +7,7 @@
 <!-- TEMPLATE -->
 <template><div id="main-view">
 
-  <backend-test
-   backend="/v1"
-   :port-number="8080"
-   class="backendTest">
-  </backend-test>
-
-  <button @click="testStore">Increment: ({{ numClicks }})</button>
+  <server-source></server-source>
 
 </div></template>
 
@@ -22,10 +16,12 @@
 <!-- SCRIPT -->
 <script>
 import backendTest from './backendTest'
+import serverSource from './serverSource'
 
 export default {
   components: {
-    backendTest
+    backendTest,
+    serverSource
   },
 
   data () {
@@ -35,15 +31,9 @@ export default {
   },
 
   computed: {
-    numClicks () {
-      return this.$store.state.count
-    }
   },
 
   methods: {
-    testStore: function () {
-      this.$store.dispatch('increment')
-    }
   }
 }
 </script>

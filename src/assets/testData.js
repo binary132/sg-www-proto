@@ -1,5 +1,4 @@
-export default{
-  source: {},
+export default {
   user: {
     name: 'Kevin Weber',
     id: '001',
