@@ -5,7 +5,9 @@
 <!--  -->
 
 <!-- TEMPLATE -->
-<template><div id="main-view">
+<template><div id="main-view" :class="loggedIn">
+
+  <login></login>
 
   <server-source></server-source>
 
@@ -15,22 +17,28 @@
 
 <!-- SCRIPT -->
 <script>
-import backendTest from './backendTest'
+import login from './login'
 import serverSource from './serverSource'
 
 export default {
   components: {
-    backendTest,
+    login,
     serverSource
   },
 
   data () {
     return {
-      name: 'Kev'
     }
   },
 
   computed: {
+    loggedIn: function () {
+      if (this.$store.state.tokens.length > 0) {
+        return 'loggedIn'
+      } else {
+        return ''
+      }
+    }
   },
 
   methods: {
@@ -43,9 +51,12 @@ export default {
 <!-- STYLE -->
 <style>
 #main-view{
-  background: #383230;
   width: 100%;
   height: 100vh;
+  background: #383230;
+}
+#main-view.loggedIn{
+  background: #408060;
 }
 .backendTest{
   width: 500px;
