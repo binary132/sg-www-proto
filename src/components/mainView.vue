@@ -13,6 +13,8 @@
    class="backendTest">
   </backend-test>
 
+  <button @click="testStore">Increment: ({{ numClicks }})</button>
+
 </div></template>
 
 
@@ -24,6 +26,24 @@ import backendTest from './backendTest'
 export default {
   components: {
     backendTest
+  },
+
+  data () {
+    return {
+      name: 'Kev'
+    }
+  },
+
+  computed: {
+    numClicks () {
+      return this.$store.state.count
+    }
+  },
+
+  methods: {
+    testStore: function () {
+      this.$store.dispatch('increment')
+    }
   }
 }
 </script>
