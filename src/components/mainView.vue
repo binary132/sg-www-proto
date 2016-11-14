@@ -24,7 +24,7 @@ export default {
 
   computed: {
     loggedIn: function () {
-      if (this.$store.state.tokens.length > 0) {
+      if (this.$store.state.tokens.token) {
         return 'loggedIn'
       } else {
         return ''

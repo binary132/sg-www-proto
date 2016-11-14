@@ -51,7 +51,7 @@ export default {
     },
 
     loggedIn: function () {
-      return this.loginResponseOK && this.$store.state.tokens.length
+      return this.loginResponseOK && this.$store.state.tokens.token
     },
 
     loginState: function () {
