@@ -17,8 +17,7 @@ import tokens from './modules/tokens'
 export default new Vuex.Store({
   state: {
     backend: '/v1',
-    portNumber: '8080',
-    source: {}
+    portNumber: '8080'
     // testData
   },
 

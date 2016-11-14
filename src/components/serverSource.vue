@@ -8,7 +8,7 @@
 <template>
   <div class="server-source component">
     <h3>Server Source</h3>
-    <p>{{serverSource}}</p>
+    <span v-text="serverSource"></span>
   </div>
 </template>
 
