@@ -6,7 +6,7 @@
 
 <!-- TEMPLATE -->
 <template>
-  <div class="server-source">
+  <div class="server-source component">
     <h3>Server Source</h3>
     <p>{{serverSource}}</p>
   </div>

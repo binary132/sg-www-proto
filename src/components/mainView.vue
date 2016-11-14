@@ -7,23 +7,14 @@
 <!-- TEMPLATE -->
 <template><div id="main-view" :class="loggedIn">
 
-  <login></login>
-
-  <server-source></server-source>
-
 </div></template>
 
 
 
 <!-- SCRIPT -->
 <script>
-import login from './login'
-import serverSource from './serverSource'
-
 export default {
   components: {
-    login,
-    serverSource
   },
 
   data () {
@@ -58,10 +49,13 @@ export default {
 #main-view.loggedIn{
   background: #408060;
 }
+
 .backendTest{
   width: 500px;
   height: 75vh;
   margin: auto;
   color: #e0d8d0;
 }
+
+
 </style>
