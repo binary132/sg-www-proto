@@ -1,17 +1,25 @@
-import Vue from 'vue'
-import Vuex from 'vuex'
+// import Vue from 'vue'
+// import Vuex from 'vuex'
+//
+// import * as actions from '../globalActions'
+// import * as mutations from '../globalMutations'
 
-import * as actions from '../globalActions'
-import * as mutations from '../globalMutations'
+// Vue.use(Vuex)
 
-Vue.use(Vuex)
+const resource = 'tokens'
 
-export default new Vuex.Store({
-  state: {
-  },
+const state = {}
 
-  actions,
+const actions = {
+  refreshToken (context, payload) {
+    context.dispatch('post', {
+      resource: resource,
+      body: payload
+    })
+  }
+}
 
-  mutations
-
-})
+export default {
+  state,
+  actions
+}

@@ -1,11 +1,9 @@
-export const set = (state, data) => {
-  state[data.collection] = data.value
+export const content = (state, {resource, content}) => {
+  // console.log(JSON.stringify(state))
+  // console.log(JSON.stringify(resource))
+  state[resource]['content'] = content
 }
 
-// export const add = (state, data) => {
-//   state[data.collection] = (data.value)
-// }
-
-export const setErr = (state, data) => {
-  state[data.collection.error] = data.value
+export const error = (state, {resource, error}) => {
+  state[resource]['error'] = error
 }

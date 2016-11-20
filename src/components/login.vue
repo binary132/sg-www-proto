@@ -70,9 +70,9 @@ export default {
 
   methods: {
     submitLogin: function () {
-      this.$store.dispatch('post', {
-        collection: 'tokens',
-        body: { name: this.usnEntry, pwhash: this.pwhash }
+      this.$store.dispatch('refreshToken', {
+        name: this.usnEntry,
+        pwhash: this.pwhash
       })
 
       this.sentLogin = true

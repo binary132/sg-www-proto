@@ -8,6 +8,7 @@ import * as actions from './globalActions'
 import * as mutations from './globalMutations'
 
 // Import store modules (collections)
+import source from './modules/source'
 import tokens from './modules/tokens'
 
 // Import test data
@@ -22,6 +23,7 @@ export default new Vuex.Store({
   },
 
   modules: {
+    source,
     tokens
   },
 
