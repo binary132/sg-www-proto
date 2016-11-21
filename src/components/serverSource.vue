@@ -17,7 +17,7 @@
 export default {
   computed: {
     serverSource: function () {
-      return this.$store.state.source
+      return this.$store.state.source.content
     }
   },
 
@@ -31,7 +31,12 @@ export default {
 <!-- STYLE -->
 <style scoped>
 .server-source{
+  position: absolute;
+  text-align: center;
   color: #a97;
+  font-size: 12px;
+  bottom: 1em;
+  width: 100%;
 }
 h3{
   margin: 0;
