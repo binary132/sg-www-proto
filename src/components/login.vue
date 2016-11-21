@@ -38,6 +38,13 @@ export default {
   },
 
   computed: {
+    tokens: function () {
+      return this.$store.state.tokens.content
+    },
+    error: function () {
+      return this.$store.state.tokens.error
+    },
+
     pwhash: function () {
       return sjcl.codec.base64.fromBits(sjcl.hash.sha256.hash(this.pwdEntry))
     },
@@ -51,20 +58,11 @@ export default {
     },
 
     loggedIn: function () {
-      return this.loginResponseOK && this.$store.state.tokens.token
+      return this.loginResponseOK && (Object.keys(this.tokens).length > 0)
     },
 
     loginState: function () {
-      let tokens = this.$store.state.tokens
-      // let response = { msg: '', okay: true }
-
-      // if (!this.sentLogin) {
-      //   return { msg: '', okay: true }
-      // } else if (!err ){
-      //   return { msg: 'Waiting for server event...', okay: true }
-      // }
-
-      if (tokens && tokens.error) { return {msg: 'Failed to log-in', okay: false} }
+      if (!this.tokens) { return {msg: 'Failed to log-in', okay: false} }
     }
   },
 
