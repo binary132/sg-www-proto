@@ -4,6 +4,7 @@ const resource = 'convos'
 
 const state = {
   content: [],
+  websockets: {},
   error: {}
 }
 
@@ -18,7 +19,9 @@ const actions = {
       login: helpers.HEADER_USER
     }).then(
       (response) => {
-        context.commit('setAllConvos', JSON.parse(response.body))
+        let convos = JSON.parse(response.body)
+        context.commit('setAllConvos', convos)
+        context.dispatch('initAllMessageArrays', convos)
       }, (err) => {
         context.commit('setConvoError', {text: 'Failed to get convos: ' + JSON.stringify(err)})
       }
@@ -36,19 +39,26 @@ const actions = {
       login: helpers.HEADER_USER
     }).then(
       (response) => {
-        console.log('insert conversation: ' + JSON.parse(response.body))
-        context.commit('pushConvo', JSON.parse(response.body))
+        let convo = JSON.parse(response.body)
+        console.log('insert conversation: ' + convo)
+        context.commit('pushConvo', convo)
         context.commit('setConvoError', {text: 'Everything is okay!'})
+        context.dispatch('initMessageArray', convo.id)
       }, (err) => {
         console.log('error inserting conversation: ' + JSON.stringify(err))
         console.log(helpers.HEADER_USER)
         context.commit('setConvoError', {text: 'Something went wrong', error: err})
       })
+  },
+
+  openWebsocket (context, args) {
+    context.commit('setWebsocket', args)
+  },
+
+  closeWebsocket (context, convoId) {
+    context.commit('deleteWebsocket', convoId)
   }
 }
-
-// context.commit('content', {resource: resource, content: JSON.parse(response.body)})
-// context.commit('error', { resource: resource, error: {text: 'Everything is okay!'} })
 
 const mutations = {
   pushConvo (state, convo) {
@@ -61,6 +71,19 @@ const mutations = {
 
   setConvoError (state, error) {
     state.error = error
+  },
+
+  setWebsocket (state, {websocket, convoId}) {
+    state.websockets[convoId] = websocket
+  },
+
+  deleteWebsocket (state, convoId) {
+    let ws = state.websockets[convoId]
+    if (ws !== null) {
+      ws.close()
+      delete state.websockets[convoId]
+      console.log('Deleted WS ' + convoId)
+    }
   }
 }
 

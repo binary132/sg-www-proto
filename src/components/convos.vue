@@ -31,10 +31,11 @@
       </div>
 
       <h2>Message List ({{ websocketReady }})</h2>
-      <div class="list">
+      <p v-if="Object.keys(messages).length === 0">No Messages in this Conversation. Send one to begin.</p>
+      <div class="convo-messages" v-if="activeConvo >= 0">
         <button v-show='websocketReady' v-on:click='sendMessage()'>Send Message</button>
-        <p v-if="Object.keys(messages).length === 0">No Messages in this Conversation. Send one to begin.</p>
-        <p v-if="Object.keys(messages).length > 0" v-for="item in messages">{{ msg }}</p>
+        <p v-for="item in messages[convos[activeConvo].id]">{{ item }}</p>
+
       </div>
 
     </div>
@@ -49,11 +50,10 @@ export default {
 
   data () {
     return {
-      msgEntry: 'I AM A MESSSSSSAAGE',
+      msgEntry: 'MESSAGE',
       convoNameEntry: '',
       convoMemberEntry: '',
-      activeConvo: -1,
-      websocket: null
+      activeConvo: -1
     }
   },
 
@@ -67,21 +67,22 @@ export default {
     },
 
     websocketReady: function () {
-      if (this.websocket === null) {
+      if (this.activeConvo >= 0) {
+        return this.$store.state.convos.websockets[this.convos[this.activeConvo].id] !== null
+      } else {
         return false
       }
-      return true
     }
   },
 
   methods: {
     sendMessage: function () {
-      this.websocket.send(this.msgEntry)
-      this.msgEntry = ''
+      this.$store.dispatch('newMessage', {convoIndex: this.activeConvo, message: this.msgEntry})
+      // this.msgEntry = ''
     },
 
     receiveMessage: function (event) {
-      this.convoMessages.push(event.data)
+      this.$store.dispatch('newMessage', {convoIndex: this.activeConvo, message: event.data})
     },
 
     createConvo: function () {
@@ -100,26 +101,33 @@ export default {
     setActiveConvo: function (index) {
       // If re-selected current convo, just return
       if (index === this.activeConvo) return
-      this.activeConvo = index
+
+      let convoId = this.convos[index].id
+
+      // If a convo was already active, then clean up its websocket.
+      if (this.activeConvo !== -1) {
+        this.$store.dispatch('closeWebsocket', this.convos[this.activeConvo].id)
+      }
 
       // Websocket
-      this.websocket = new window.WebSocket(
+      let websocket = new window.WebSocket(
         'ws://' + window.location.host + this.$store.state.backend +
-          '/convos/' + this.convos[index].id + '/start',
-          'Bearer+' + this.$store.getters.tokenURL
+        '/convos/' + convoId + '/start',
+        'Bearer+' + this.$store.getters.tokenURL
       )
-      this.websocket.onopen = function () {
+
+      websocket.onopen = function () {
         console.log('Websocket connection established.')
       }
-      this.websocket.onmessage = this.socketReceive
+
+      websocket.onmessage = this.receiveMessage
       console.log('Opening websocket connection...')
+
+      this.$store.dispatch('openWebsocket', {websocket, convoId})
+
+      this.activeConvo = index
     }
 
-  },
-
-  events: {
-    // 'login-success': function () {
-    // }
   }
 }
 
@@ -141,18 +149,19 @@ p{
   color: #a098a0;
 }
 .convo-messages{
-  display: flex;
+  /*display: flex;*/
 }
 .convo-messages div{
   width: 100%;
 }
 .convo-messages p{
+  color: #fff;
   font-size: 0.8em;
   line-height: 1.5em;
   margin: 0;
 }
 .convo-messages p:nth-of-type(even){
-  background: #f0f0f0;
+  background: rgba(255,255,255,0.15);
 }
 .convo-item{
 
