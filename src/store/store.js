@@ -11,6 +11,8 @@ import * as getters from './globalGetters'
 // Import store modules (collections)
 import source from './modules/source'
 import tokens from './modules/tokens'
+import convos from './modules/convos'
+import messages from './modules/messages'
 
 // Import test data
 // import testData from '../assets/testData'
