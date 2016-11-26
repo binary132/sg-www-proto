@@ -14,6 +14,7 @@ const actions = {
       console.log('set new token ' + JSON.parse(response.body))
       context.commit('setTokenContent', JSON.parse(response.body))
       context.commit('setTokenError', {text: 'Everything is okay!'})
+      context.dispatch('onLogin')
     }, (err) => {
       console.log('error getting new token: ' + JSON.stringify(err))
       context.commit('setTokenError', {text: 'OH NO!', reason: err})
