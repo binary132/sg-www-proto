@@ -5,24 +5,29 @@ import Vuex from 'vuex'
 Vue.use(VueResource)
 Vue.use(Vuex)
 
-export const post = (context, {resource, body}) => {
+export const post = (context, {resource, body, login}) => {
+  // Pre-REST actions
   console.log('Sending POST request: ' + context.state.backend + '/' + resource)
-  Vue.http.post(context.state.backend + '/' + resource, body).then((response) => {
-    context.commit('content', {resource: resource, content: JSON.parse(response.body)})
-    context.commit('error', { resource: resource, error: {text: 'Everything is okay!'} })
-  }, (err) => {
-    console.log('POST to /' + resource + ' failed: ' + JSON.stringify(err))
-    context.commit('error', { resource: resource, error: err })
-  })
+
+  // If header included, POST with header
+  if (login) {
+    console.log('POST with header')
+    let header = {'Authorization': 'Bearer ' + context.state.tokens.content.token}
+    return Vue.http.post(context.state.backend + '/' + resource, body, header)
+  } else {
+    return Vue.http.post(context.state.backend + '/' + resource, body)
+  }
 }
 
-export const get = (context, { resource }) => {
+export const get = (context, { resource, login }) => {
+  // Pre-REST actions
   console.log('Sending GET request: ' + context.state.backend + '/' + resource)
-  Vue.http.get(context.state.backend + '/' + resource).then((response) => {
-    context.commit('content', {resource: resource, content: JSON.parse(response.body)})
-    context.commit('error', { resource: resource, error: {text: 'Everything is okay!'} })
-  }, (err) => {
-    console.log('GET on /' + resource + ' failed: ' + JSON.stringify(err))
-    context.commit('error', {resource: resource, error: err})
-  })
+
+  // REST
+  if (login) {
+    let header = {'Authorization': 'Bearer ' + context.state.tokens.content.token}
+    return Vue.http.get(context.state.backend + '/' + resource, header)
+  } else {
+    return Vue.http.get(context.state.backend + '/' + resource)
+  }
 }
