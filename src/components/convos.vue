@@ -32,7 +32,7 @@
 
       <h2>Message List ({{ websocketReady }})</h2>
       <div class="list">
-        <button v-show='websocketReady' v-on:click='socketSend()'>Send Message</button>
+        <button v-show='websocketReady' v-on:click='sendMessage()'>Send Message</button>
         <p v-if="Object.keys(messages).length === 0">No Messages in this Conversation. Send one to begin.</p>
         <p v-if="Object.keys(messages).length > 0" v-for="item in messages">{{ msg }}</p>
       </div>
@@ -49,11 +49,10 @@ export default {
 
   data () {
     return {
-      msgEntry: '',
+      msgEntry: 'I AM A MESSSSSSAAGE',
       convoNameEntry: '',
       convoMemberEntry: '',
-      activeConvoId: 0,
-      convoIds: [],
+      activeConvo: -1,
       websocket: null
     }
   },
@@ -87,46 +86,27 @@ export default {
 
     createConvo: function () {
       // Trims and parses user string into an array of users
-      let users = this.convoMemberEntry.split(',').forEach(String.trim)
-
-      this.$store.dispatch('createConvo', {name: this.convoNameEntry, readers: users, writers: users})
-
-      this.$http.post(
-        this.backend + '/convos', {
-          'name': this.convoNameEntry,
-          'readers': {[this.convoMemberEntry]: true},
-          'writers': {[this.convoMemberEntry]: true}
-        }, {headers: {'Authorization': 'Bearer ' + this.sessionToken}}).then((response) => {
-          let convo = JSON.parse(response.body)
-          console.log(convo)
-          this.userconvos.push(convo)
-        }, (err) => {
-          console.log('Failed to create convo (POST to /convos): ' + JSON.stringify(err))
-        })
+      let rawUsersArray = this.convoMemberEntry.split(',')
+      let finalUsers = {}
+      rawUsersArray.forEach((user) => {
+        finalUsers[user.trim()] = true
+      })
+      this.$store.dispatch('createConvo', {name: this.convoNameEntry, readers: finalUsers, writers: finalUsers})
 
       this.convoNameEntry = ''
       this.convoMemberEntry = ''
     },
 
-    getConvo: function () {
-      this.$http.get(this.backend + '/convos', {headers: {'Authorization': 'Bearer ' + this.sessionToken}}).then((response) => {
-        console.log(JSON.parse(response.body))
-        this.userconvos = JSON.parse(response.body)
-      }, (err) => {
-        console.log('Failed to get convos (GET to /convos): ' + JSON.stringify(err))
-      })
-    },
-
     setActiveConvo: function (index) {
       // If re-selected current convo, just return
-      if (index === this.activeconvo) return
-      this.activeconvo = index
+      if (index === this.activeConvo) return
+      this.activeConvo = index
 
       // Websocket
       this.websocket = new window.WebSocket(
-        'ws://' + window.location.host + this.backend +
-          '/convos/' + this.userConvos[index].id + '/start',
-          'Bearer+' + this.$store.tokenURL
+        'ws://' + window.location.host + this.$store.state.backend +
+          '/convos/' + this.convos[index].id + '/start',
+          'Bearer+' + this.$store.getters.tokenURL
       )
       this.websocket.onopen = function () {
         console.log('Websocket connection established.')
