@@ -107,6 +107,7 @@ export default {
   text-align: center;
   outline: 1px solid #a97;
   bottom: 0;
+  z-index: 100;
 
   color: #a97;
   background: #302a28;
