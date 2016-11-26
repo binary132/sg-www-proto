@@ -22,7 +22,7 @@ export default {
   },
 
   mounted: function () {
-    this.$store.dispatch('get', {resource: 'source'})
+    this.$store.dispatch('getSource', {resource: 'source'})
   }
 }
 

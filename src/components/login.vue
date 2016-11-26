@@ -26,7 +26,6 @@ import sjcl from 'sjcl'
 export default {
   data () {
     return {
-      loggedIn: false,
       usnEntry: '',
       pwdEntry: '',
       username: '',
@@ -68,7 +67,7 @@ export default {
 
   methods: {
     submitLogin: function () {
-      this.$store.dispatch('refreshToken', {
+      this.$store.dispatch('logIn', {
         name: this.usnEntry,
         pwhash: this.pwhash
       })
