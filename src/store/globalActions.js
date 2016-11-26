@@ -5,17 +5,20 @@ import Vuex from 'vuex'
 Vue.use(VueResource)
 Vue.use(Vuex)
 
-export const post = (context, {resource, body, login}) => {
-  // Pre-REST actions
-  console.log('Sending POST request: ' + context.state.backend + '/' + resource)
+import * as helpers from './helpers'
 
+export const post = (context, {resource, body, login}) => {
   // If header included, POST with header
-  if (login) {
-    console.log('POST with header')
-    let header = {'Authorization': 'Bearer ' + context.state.tokens.content.token}
-    return Vue.http.post(context.state.backend + '/' + resource, body, header)
-  } else {
-    return Vue.http.post(context.state.backend + '/' + resource, body)
+  switch (login) {
+
+    case helpers.HEADER_USER:
+      let header = {'Authorization': 'Bearer ' + context.state.tokens.content.token}
+      console.log('POST with user authorization header')
+      return Vue.http.post(context.state.backend + '/' + resource, body, {headers: header})
+
+    default:
+      console.log('POST without header')
+      return Vue.http.post(context.state.backend + '/' + resource, body)
   }
 }
 
@@ -24,10 +27,15 @@ export const get = (context, { resource, login }) => {
   console.log('Sending GET request: ' + context.state.backend + '/' + resource)
 
   // REST
-  if (login) {
-    let header = {'Authorization': 'Bearer ' + context.state.tokens.content.token}
-    return Vue.http.get(context.state.backend + '/' + resource, header)
-  } else {
-    return Vue.http.get(context.state.backend + '/' + resource)
+  switch (login) {
+
+    case helpers.HEADER_USER:
+      let header = {'Authorization': 'Bearer ' + context.state.tokens.content.token}
+      console.log('GET with user authorization header')
+      return Vue.http.get(context.state.backend + '/' + resource, {headers: header})
+
+    default:
+      console.log('GET without header')
+      return Vue.http.get(context.state.backend + '/' + resource)
   }
 }
