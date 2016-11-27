@@ -6,7 +6,7 @@
 
 <!-- TEMPLATE -->
 <template>
-  <div class="component convos">
+  <div class="component">
     <h1>Convos</h1>
     <div class="outline">
 
@@ -18,21 +18,25 @@
       <button v-on:click='createConvo()'>Create Conversation</button>
 
       <h2>Convo List</h2>
-      <div class="convo-list">
+      <div class="list">
         <p v-if="Object.keys(convos).length === 0">No Conversations. Create one to begin.</p>
         <ul v-if="Object.keys(convos).length > 0">
-          <li v-for="(item, index) in convos">
-            <span v-on:click="setActiveConvo(index)" v-bind:class="['convo-item', index === activeConvo ? 'active' : '']">
+          <li v-for="(item, index) in convos"
+            v-bind:class="index === activeConvo ? 'active' : ''">
+            <span v-on:click="setActiveConvo(index)" class="item">
               {{item.name}}
-              <span v-if='index === activeConvo'> (Active)</span>
+              <!-- <span v-if='index === activeConvo' class="active-label"> (Active)</span> -->
             </span>
+            <div v-on:click="deleteConvo(index)" class="delete">
+              ×
+            </div>
           </li>
         </ul>
       </div>
 
       <h2>Message List ({{ websocketReady }})</h2>
       <p v-if="Object.keys(messages).length === 0">No Messages in this Conversation. Send one to begin.</p>
-      <div class="convo-messages" v-if="activeConvo >= 0">
+      <div class="messages" v-if="activeConvo >= 0">
         <button v-show='websocketReady' v-on:click='sendMessage()'>Send Message</button>
         <p v-for="item in messages[convos[activeConvo].id]">{{ item }}</p>
 
@@ -98,6 +102,14 @@ export default {
       this.convoMemberEntry = ''
     },
 
+    deleteConvo: function (index) {
+      this.$store.dispatch('deleteConvo', index)
+
+      if (index === this.activeConvo) {
+        this.unsetActiveConvo()
+      }
+    },
+
     setActiveConvo: function (index) {
       // If re-selected current convo, just return
       if (index === this.activeConvo) return
@@ -126,8 +138,12 @@ export default {
       this.$store.dispatch('openWebsocket', {websocket, convoId})
 
       this.activeConvo = index
-    }
+    },
 
+    unsetActiveConvo: function () {
+      this.$store.dispatch('closeWebsocket', this.convos[this.activeConvo].id)
+      this.activeConvo = -1
+    }
   }
 }
 
@@ -141,6 +157,7 @@ export default {
 }
 h1,h2,h3,h4{
   font-weight: 200;
+  margin-bottom: 0.5em;
 }
 h1, h2{
   border-bottom: 1px solid #e0d8d0;
@@ -148,29 +165,54 @@ h1, h2{
 p{
   color: #a098a0;
 }
-.convo-messages{
-  /*display: flex;*/
+
+.list{
+  text-align: left;
 }
-.convo-messages div{
-  width: 100%;
+.list ul{
+  padding: 0;
 }
-.convo-messages p{
+.list li{
+  padding: 0 1em;
+  position: relative;
+  display: block;
+  line-height: 1em;
+}
+.list li.active{
   color: #fff;
-  font-size: 0.8em;
-  line-height: 1.5em;
-  margin: 0;
-}
-.convo-messages p:nth-of-type(even){
   background: rgba(255,255,255,0.15);
 }
-.convo-item{
+.list .item{
+  cursor: pointer;
+}
+.list .item:hover{
+  color: #fff;
+}
+.list .delete{
+  font-size: 1.2em;
+  opacity: 0.3;
+  color: #fff;
+  cursor: pointer;
+  display: inline-block;
+  position: absolute;
+  right: 1em;
+  text-align: right;
+}
+.list .delete:hover{
+  opacity: 1.0;
+}
 
+.messages div{
+  width: 100%;
 }
-.convo-item.active{
-  color: #60a060;
+.messages p{
+  color: #fff;
+  font-size: 0.8em;
+  line-height: 1.2em;
+  margin: 0;
 }
-.server-source-check{
-  font-size: 0.7em;
+.messages p:nth-of-type(even){
+  background: rgba(255,255,255,0.15);
 }
 .api-response{
   margin-top: 0.33em;

@@ -51,6 +51,25 @@ const actions = {
       })
   },
 
+  deleteConvo (context, index) {
+    let id = context.state.content[index].id
+    context.dispatch('DELETE', {
+      resource,
+      id,
+      login: helpers.HEADER_USER
+    }).then(
+      (response) => {
+        context.commit('deleteWebsocket', id)
+        context.commit('deleteConvo', index)
+        context.dispatch('deleteMessageArray', id)
+        context.commit('setConvoError', {text: 'Everything is okay!'})
+      }, (err) => {
+        console.log('Errored on delete')
+        context.commit('setConvoError', {text: 'Something went wrong', error: err})
+      }
+    )
+  },
+
   openWebsocket (context, args) {
     context.commit('setWebsocket', args)
   },
@@ -63,6 +82,10 @@ const actions = {
 const mutations = {
   pushConvo (state, convo) {
     state.content.push(convo)
+  },
+
+  deleteConvo (state, index) {
+    state.content.splice(index, 1)
   },
 
   setAllConvos (state, convos) {
@@ -79,7 +102,7 @@ const mutations = {
 
   deleteWebsocket (state, convoId) {
     let ws = state.websockets[convoId]
-    if (ws !== null) {
+    if (ws !== null && ws !== undefined) {
       ws.close()
       delete state.websockets[convoId]
       console.log('Deleted WS ' + convoId)

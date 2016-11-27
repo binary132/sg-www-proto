@@ -35,6 +35,10 @@ const actions = {
 
   initMessageArray (context, id) {
     context.commit('createMessageArray', id)
+  },
+
+  deleteMessageArray (context, id) {
+    context.commit('deleteMessageArray', id)
   }
 }
 
@@ -59,6 +63,10 @@ const mutations = {
 
   createMessageArray (state, id) {
     Vue.set(state.content, id, [])
+  },
+
+  deleteMessageArray (state, id) {
+    delete state.content[id]
   }
 }
 
