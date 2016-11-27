@@ -28,7 +28,6 @@ export default {
     return {
       usnEntry: '',
       pwdEntry: '',
-      username: '',
       sentLogin: false,
       loginResponse: 'Waiting for server event...',
       loginResponseOK: true,
@@ -50,7 +49,7 @@ export default {
 
     title: function () {
       if (this.loggedIn) {
-        return 'User: ' + this.username
+        return 'User: ' + this.$store.state.profile.content.name
       } else {
         return 'Not Logged In'
       }
@@ -73,7 +72,6 @@ export default {
       })
 
       this.sentLogin = true
-      this.username = this.usnEntry
       this.clearFields()
     },
 
@@ -84,15 +82,9 @@ export default {
 
     toggleMinimize: function () {
       this.minimized = !this.minimized
-      if (this.minimized) {
-        this.focusUsernameInput
-      }
-    }
-
-  },
-
-  events: {
-    'login-success': function () {
+      // if (this.minimized) {
+      //   this.focusUsernameInput
+      // }
     }
   }
 }
