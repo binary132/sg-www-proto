@@ -56,11 +56,7 @@ export default {
     },
 
     loggedIn: function () {
-      return this.loginResponseOK && (Object.keys(this.tokens).length > 0)
-    },
-
-    loginState: function () {
-      if (!this.tokens) { return {msg: 'Failed to log-in', okay: false} }
+      return this.loginResponseOK && this.$store.getters.loggedIn
     }
   },
 

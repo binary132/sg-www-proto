@@ -1,3 +1,4 @@
+import Vue from 'vue'
 import * as helpers from '../helpers'
 
 const resource = 'profile'
@@ -32,10 +33,10 @@ const actions = {
 }
 
 const mutations = {
-
   setProfile (state, profile) {
     // TODO: If something not updating, switch to Vue.set
-    state.content = profile
+    // state.content = profile
+    Vue.set(state, 'content', profile)
   },
 
   setProfileError (state, error) {

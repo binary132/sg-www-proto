@@ -6,3 +6,7 @@ export const tokenURL = state => {
   let tokenBits = sjcl.codec.base64.toBits(state.tokens.content.token)
   return sjcl.codec.base64url.fromBits(tokenBits)
 }
+
+export const loggedIn = state => {
+  return Object.keys(state.profile.content).length !== 0
+}
