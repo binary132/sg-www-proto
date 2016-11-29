@@ -23,9 +23,14 @@ const actions = {
     )
   },
 
-  newMessage (context, {convoIndex, message}) {
+  sendMessage (context, {convoIndex, message}) {
     let id = context.rootState.convos.content[convoIndex].id
     context.rootState.convos.websockets[id].send(message)
+    context.commit('pushMessage', {message, id})
+  },
+
+  receiveMessage (context, {convoIndex, message}) {
+    let id = context.rootState.convos.content[convoIndex].id
     context.commit('pushMessage', {message, id})
   },
 

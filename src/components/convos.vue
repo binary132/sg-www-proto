@@ -81,12 +81,12 @@ export default {
 
   methods: {
     sendMessage: function () {
-      this.$store.dispatch('newMessage', {convoIndex: this.activeConvo, message: this.msgEntry})
+      this.$store.dispatch('sendMessage', {convoIndex: this.activeConvo, message: this.msgEntry})
       // this.msgEntry = ''
     },
 
     receiveMessage: function (event) {
-      this.$store.dispatch('newMessage', {convoIndex: this.activeConvo, message: event.data})
+      this.$store.dispatch('receiveMessage', {convoIndex: this.activeConvo, message: event.data})
     },
 
     createConvo: function () {
