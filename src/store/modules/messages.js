@@ -39,7 +39,10 @@ const actions = {
 
   sendMessage (context, {convoIndex, message}) {
     let convoId = context.rootState.convos.content[convoIndex].id
-    context.rootState.convos.websockets[convoId].send(message)
+    let formattedMessage = JSON.stringify({content: message})
+
+    context.rootState.convos.websockets[convoId].send(formattedMessage)
+
     context.commit('pushMessage', {message, convoId})
   },
 
