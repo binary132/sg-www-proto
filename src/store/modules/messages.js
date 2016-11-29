@@ -29,6 +29,7 @@ const actions = {
       login: helpers.HEADER_USER
     }).then(
       (response) => {
+        console.log(JSON.parse(response.body))
         context.commit('setMessages', {convoId, messages: JSON.parse(response.body)})
         context.commit('setMessageError', {text: 'Everything is okay!'})
       }, (err) => {
