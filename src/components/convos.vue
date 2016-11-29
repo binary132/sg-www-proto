@@ -8,7 +8,7 @@
 <template>
   <div class="component">
     <h1>Convos</h1>
-    <div class="outline">
+    <div v-if="loggedIn">
 
       <h2>Convo Creator</h2>
       <div class="input-group">
@@ -25,7 +25,6 @@
             v-bind:class="index === currentIndex ? 'active' : ''">
             <span v-on:click="setActiveConvo(index)" class="item">
               {{item.name}}
-              <!-- <span v-if='index === currentIndex' class="active-label"> (Active)</span> -->
             </span>
             <div v-on:click="deleteConvo(index)" class="delete">
               ×
@@ -34,14 +33,25 @@
         </ul>
       </div>
 
-      <h2>Message List ({{ websocketReady }})</h2>
-      <p v-if="Object.keys(messages).length === 0">No Messages in this Conversation. Send one to begin.</p>
-      <div class="messages" v-if="currentIndex >= 0">
-        <button v-show='websocketReady' v-on:click='sendMessage()'>Send Message</button>
-        <p v-for="item in messages[convos[currentIndex].id]">{{ item }}</p>
+      <div v-if="currentIndex >= 0">
+        <h2>{{ convos[currentIndex].name }}</h2>
+        <p v-if="Object.keys(messages).length === 0">No Messages in this Conversation. Send one to begin.</p>
+        <div class="messages" v-if="currentIndex >= 0">
+          <div v-for="item in messages[convos[currentIndex].id]">
+            {{ item.sender}} » {{ item.content }}
+          </div>
 
+          <input type="text"
+            v-model="msgEntry"
+            @keydown.enter="sendMessage()"
+            placeholder="Message Content"
+            :disabled="!websocketReady">
+        </div>
       </div>
 
+    </div>
+    <div v-else>
+      <p>Please log in to see your conversations</p>
     </div>
   </div>
 </template>
@@ -54,7 +64,7 @@ export default {
 
   data () {
     return {
-      msgEntry: 'MESSAGE',
+      msgEntry: '',
       convoNameEntry: '',
       convoMemberEntry: '',
       currentIndex: -1
@@ -72,17 +82,21 @@ export default {
 
     websocketReady: function () {
       if (this.currentIndex >= 0) {
-        return this.$store.state.convos.websockets[this.convos[this.currentIndex].id] !== null
+        return this.$store.state.convos.websockets[this.convos[this.currentIndex].id] !== undefined
       } else {
         return false
       }
+    },
+
+    loggedIn: function () {
+      return this.$store.getters.loggedIn
     }
   },
 
   methods: {
     sendMessage: function () {
       this.$store.dispatch('sendMessage', {convoIndex: this.currentIndex, content: this.msgEntry})
-      // this.msgEntry = ''
+      this.msgEntry = ''
     },
 
     receiveMessage: function (event) {
@@ -210,13 +224,13 @@ p{
 .messages div{
   width: 100%;
 }
-.messages p{
+.messages div{
   color: #fff;
   font-size: 0.8em;
   line-height: 1.2em;
   margin: 0;
 }
-.messages p:nth-of-type(even){
+.messages div:nth-of-type(even){
   background: rgba(255,255,255,0.15);
 }
 .api-response{
@@ -234,6 +248,8 @@ p{
 input{
   text-align: center;
   width: 100%;
+  margin: 0.5em 0;
+  padding: 0.25em;
 }
 button{
   width: 100%;
