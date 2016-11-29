@@ -22,10 +22,10 @@
         <p v-if="Object.keys(convos).length === 0">No Conversations. Create one to begin.</p>
         <ul v-if="Object.keys(convos).length > 0">
           <li v-for="(item, index) in convos"
-            v-bind:class="index === activeConvo ? 'active' : ''">
+            v-bind:class="index === currentIndex ? 'active' : ''">
             <span v-on:click="setActiveConvo(index)" class="item">
               {{item.name}}
-              <!-- <span v-if='index === activeConvo' class="active-label"> (Active)</span> -->
+              <!-- <span v-if='index === currentIndex' class="active-label"> (Active)</span> -->
             </span>
             <div v-on:click="deleteConvo(index)" class="delete">
               ×
@@ -36,9 +36,9 @@
 
       <h2>Message List ({{ websocketReady }})</h2>
       <p v-if="Object.keys(messages).length === 0">No Messages in this Conversation. Send one to begin.</p>
-      <div class="messages" v-if="activeConvo >= 0">
+      <div class="messages" v-if="currentIndex >= 0">
         <button v-show='websocketReady' v-on:click='sendMessage()'>Send Message</button>
-        <p v-for="item in messages[convos[activeConvo].id]">{{ item }}</p>
+        <p v-for="item in messages[convos[currentIndex].id]">{{ item }}</p>
 
       </div>
 
@@ -57,7 +57,7 @@ export default {
       msgEntry: 'MESSAGE',
       convoNameEntry: '',
       convoMemberEntry: '',
-      activeConvo: -1
+      currentIndex: -1
     }
   },
 
@@ -71,8 +71,8 @@ export default {
     },
 
     websocketReady: function () {
-      if (this.activeConvo >= 0) {
-        return this.$store.state.convos.websockets[this.convos[this.activeConvo].id] !== null
+      if (this.currentIndex >= 0) {
+        return this.$store.state.convos.websockets[this.convos[this.currentIndex].id] !== null
       } else {
         return false
       }
@@ -81,12 +81,12 @@ export default {
 
   methods: {
     sendMessage: function () {
-      this.$store.dispatch('sendMessage', {convoIndex: this.activeConvo, message: this.msgEntry})
+      this.$store.dispatch('sendMessage', {convoIndex: this.currentIndex, message: this.msgEntry})
       // this.msgEntry = ''
     },
 
     receiveMessage: function (event) {
-      this.$store.dispatch('receiveMessage', {convoIndex: this.activeConvo, message: event.data})
+      this.$store.dispatch('receiveMessage', {convoIndex: this.currentIndex, message: event.data})
     },
 
     createConvo: function () {
@@ -105,23 +105,24 @@ export default {
     deleteConvo: function (index) {
       this.$store.dispatch('deleteConvo', index)
 
-      if (index === this.activeConvo) {
+      if (index === this.currentIndex) {
         this.unsetActiveConvo()
       }
     },
 
-    setActiveConvo: function (index) {
+    setActiveConvo: function (newIndex) {
       // If re-selected current convo, just return
-      if (index === this.activeConvo) return
+      if (newIndex === this.currentIndex) return
 
-      let convoId = this.convos[index].id
-
-      // If a convo was already active, then clean up its websocket.
-      if (this.activeConvo !== -1) {
-        this.$store.dispatch('closeWebsocket', this.convos[this.activeConvo].id)
+      // If a convo was previously active, then clean up its websocket.
+      if (this.currentIndex !== -1) {
+        this.$store.dispatch('closeWebsocket', this.convos[this.currentIndex].id)
       }
 
-      // Websocket
+      // Get id of the new convo
+      let convoId = this.convos[newIndex].id
+
+      // Create Websocket
       let websocket = new window.WebSocket(
         'ws://' + window.location.host + this.$store.state.backend +
         '/convos/' + convoId + '/start',
@@ -137,12 +138,13 @@ export default {
 
       this.$store.dispatch('openWebsocket', {websocket, convoId})
 
-      this.activeConvo = index
+      // Set active convo to current index
+      this.currentIndex = newIndex
     },
 
     unsetActiveConvo: function () {
-      this.$store.dispatch('closeWebsocket', this.convos[this.activeConvo].id)
-      this.activeConvo = -1
+      this.$store.dispatch('closeWebsocket', this.convos[this.currentIndex].id)
+      this.currentIndex = -1
     }
   }
 }
