@@ -29,7 +29,9 @@ const actions = {
       login: helpers.HEADER_USER
     }).then(
       (response) => {
+        // Log messages GET response
         console.log(JSON.parse(response.body))
+
         context.commit('setMessages', {convoId, messages: JSON.parse(response.body)})
         context.commit('setMessageError', {text: 'Everything is okay!'})
       }, (err) => {
@@ -38,12 +40,19 @@ const actions = {
     )
   },
 
-  sendMessage (context, {convoIndex, message}) {
+  sendMessage (context, {convoIndex, content}) {
     let convoId = context.rootState.convos.content[convoIndex].id
-    let formattedMessage = JSON.stringify({content: message})
+    let formattedMessage = JSON.stringify({content: content})
 
+    // Send message on websocket
     context.rootState.convos.websockets[convoId].send(formattedMessage)
 
+    // Create a fully formatted message to add to the store
+    let message = {
+      content,
+      sender: context.rootState.profile.content.name,
+      timestamp: helpers.getRFCTime()
+    }
     context.commit('pushMessage', {message, convoId})
   },
 

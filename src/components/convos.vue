@@ -81,7 +81,7 @@ export default {
 
   methods: {
     sendMessage: function () {
-      this.$store.dispatch('sendMessage', {convoIndex: this.currentIndex, message: this.msgEntry})
+      this.$store.dispatch('sendMessage', {convoIndex: this.currentIndex, content: this.msgEntry})
       // this.msgEntry = ''
     },
 
