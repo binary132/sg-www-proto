@@ -122,6 +122,9 @@ export default {
       // Get id of the new convo
       let convoId = this.convos[newIndex].id
 
+      // Get convo messages from server
+      this.$store.dispatch('getMessages', convoId)
+
       // Create Websocket
       let websocket = new window.WebSocket(
         'ws://' + window.location.host + this.$store.state.backend +

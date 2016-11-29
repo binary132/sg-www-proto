@@ -18,20 +18,34 @@ const actions = {
         context.commit('setAllMessages', JSON.parse(response.body))
         context.commit('setMessageError', {text: 'Everything is okay!'})
       }, (err) => {
+        context.commit('setMessageError', {text: 'Failed to get all messages: ' + JSON.stringify(err)})
+      }
+    )
+  },
+
+  getMessages (context, convoId) {
+    context.dispatch('get', {
+      resource: 'convos' + '/' + convoId + '/' + resource,
+      login: helpers.HEADER_USER
+    }).then(
+      (response) => {
+        context.commit('setMessages', {convoId, messages: JSON.parse(response.body)})
+        context.commit('setMessageError', {text: 'Everything is okay!'})
+      }, (err) => {
         context.commit('setMessageError', {text: 'Failed to get messages: ' + JSON.stringify(err)})
       }
     )
   },
 
   sendMessage (context, {convoIndex, message}) {
-    let id = context.rootState.convos.content[convoIndex].id
-    context.rootState.convos.websockets[id].send(message)
-    context.commit('pushMessage', {message, id})
+    let convoId = context.rootState.convos.content[convoIndex].id
+    context.rootState.convos.websockets[convoId].send(message)
+    context.commit('pushMessage', {message, convoId})
   },
 
   receiveMessage (context, {convoIndex, message}) {
-    let id = context.rootState.convos.content[convoIndex].id
-    context.commit('pushMessage', {message, id})
+    let convoId = context.rootState.convos.content[convoIndex].id
+    context.commit('pushMessage', {message, convoId})
   },
 
   initAllMessageArrays (context, convos) {
@@ -48,12 +62,16 @@ const actions = {
 }
 
 const mutations = {
-  pushMessage (state, {message, id}) {
-    state.content[id].push(message)
-  },
-
   setAllMessages (state, messages) {
     state.content = messages
+  },
+
+  setMessages (state, {convoId, messages}) {
+    state.content[convoId] = messages
+  },
+
+  pushMessage (state, {message, convoId}) {
+    state.content[convoId].push(message)
   },
 
   setMessageError (state, error) {
