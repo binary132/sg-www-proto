@@ -100,7 +100,7 @@ export default {
     },
 
     receiveMessage: function (event) {
-      this.$store.dispatch('receiveMessage', {convoIndex: this.currentIndex, message: event.data})
+      this.$store.dispatch('receiveMessage', {convoIndex: this.currentIndex, message: JSON.parse(event.data)})
     },
 
     createConvo: function () {
