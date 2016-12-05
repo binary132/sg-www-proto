@@ -1,9 +1,11 @@
 import * as helpers from '../helpers'
+import Vue from 'vue'
 
 const resource = 'convos'
 
 const state = {
-  content: [],
+  content: {},
+  currentID: '',
   websockets: {},
   error: {}
 }
@@ -11,6 +13,22 @@ const state = {
 const actions = {
   onLogin (context) {
     context.dispatch('getAllConvos')
+  },
+
+  convoNotif (context, convo) {
+    context.dispatch('setConvo', convo)
+  },
+
+  convoDeletedNotif (context, id) {
+    context.dispatch('removeConvo', id)
+  },
+
+  convoConnectedNotif (context, {userID, convoID}) {
+    console.log('user ' + userID + ' joined convo ' + convoID)
+  },
+
+  convoDisconnectedNotif (context, {userID, convoID}) {
+    console.log('user ' + userID + ' left convo ' + convoID)
   },
 
   getAllConvos (context) {
@@ -40,8 +58,7 @@ const actions = {
     }).then(
       (response) => {
         let convo = JSON.parse(response.body)
-        console.log('insert conversation: ' + convo)
-        context.commit('pushConvo', convo)
+        context.commit('insertConvo', convo)
         context.commit('setConvoError', {text: 'Everything is okay!'})
         context.dispatch('initMessageArray', convo.id)
       }, (err) => {
@@ -51,16 +68,37 @@ const actions = {
       })
   },
 
-  deleteConvo (context, index) {
-    let id = context.state.content[index].id
+  setConvo (context, convo) {
+    // If it already exists, update it; otherwise, insert the new one.
+    context.commit('insertConvo', convo)
+    context.dispatch('initMessageArray', convo.id)
+  },
+
+  removeConvo (context, id) {
+    if (context.state.currentID === id) {
+      context.dispatch('unsetActiveConvo').then(
+        (result) => context.dispatch('removeConvo', id),
+        (err) => console.log('removing failed: ' + JSON.stringify(err))
+      )
+    }
+
+    context.commit('deleteConvo', id)
+    context.commit('deleteWebsocket', id)
+  },
+
+  deleteConvo (context, id) {
     context.dispatch('DELETE', {
       resource,
       id,
       login: helpers.HEADER_USER
     }).then(
       (response) => {
+        if (id === context.state.currentID) {
+          context.dispatch('unsetActiveConvo', id)
+        }
+
         context.commit('deleteWebsocket', id)
-        context.commit('deleteConvo', index)
+        context.commit('deleteConvo', id)
         context.dispatch('deleteMessageArray', id)
         context.commit('setConvoError', {text: 'Everything is okay!'})
       }, (err) => {
@@ -74,39 +112,53 @@ const actions = {
     context.commit('setWebsocket', args)
   },
 
-  closeWebsocket (context, convoId) {
-    context.commit('deleteWebsocket', convoId)
+  closeWebsocket (context, convoID) {
+    context.commit('deleteWebsocket', convoID)
+  },
+
+  setCurrentID (context, id) {
+    context.commit('setCurrentID', id)
+  },
+
+  unsetActiveConvo (context) {
+    context.commit('deleteWebsocket', context.state.currentID)
+    context.commit('setCurrentID', '')
   }
 }
 
 const mutations = {
-  pushConvo (state, convo) {
-    state.content.push(convo)
+  insertConvo (state, convo) {
+    Vue.set(state.content, convo.id, convo)
   },
 
-  deleteConvo (state, index) {
-    state.content.splice(index, 1)
+  deleteConvo (state, id) {
+    Vue.delete(state.content, id)
   },
 
   setAllConvos (state, convos) {
-    state.content = convos
+    convos.forEach((convo) => {
+      Vue.set(state.content, convo.id, convo)
+    })
   },
 
   setConvoError (state, error) {
     state.error = error
   },
 
-  setWebsocket (state, {websocket, convoId}) {
-    state.websockets[convoId] = websocket
+  setWebsocket (state, {websocket, newID}) {
+    Vue.set(state.websockets, newID, websocket)
   },
 
-  deleteWebsocket (state, convoId) {
-    let ws = state.websockets[convoId]
+  deleteWebsocket (state, convoID) {
+    let ws = state.websockets[convoID]
     if (ws !== null && ws !== undefined) {
       ws.close()
-      delete state.websockets[convoId]
-      console.log('Deleted WS ' + convoId)
+      Vue.delete(state.websockets, convoID)
     }
+  },
+
+  setCurrentID (state, id) {
+    state.currentID = id
   }
 }
 

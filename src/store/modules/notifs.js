@@ -1,3 +1,10 @@
+let cases = {
+  'convos': 'convoNotif',
+  'convo-deleted': 'convoDeletedNotif',
+  'convo-connected': 'convoConnectedNotif',
+  'convo-disconnected': 'convoDisconnectedNotif'
+}
+
 const state = {
   websocket: {},
   connected: false,
@@ -13,8 +20,8 @@ const actions = {
     context.commit('setNotifWS', ws)
   },
 
-  dispatchNotif (context, notif) {
-    console.log('received ' + notif.name + ' notif: ' + JSON.stringify(JSON.parse(notif.contents)))
+  dispatchNotif (context, {name, contents}) {
+    context.dispatch(cases[name], contents)
   }
 }
 

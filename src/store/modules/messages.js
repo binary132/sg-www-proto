@@ -23,16 +23,16 @@ const actions = {
     )
   },
 
-  getMessages (context, convoId) {
+  getMessages (context, convoID) {
     context.dispatch('get', {
-      resource: 'convos' + '/' + convoId + '/' + resource,
+      resource: 'convos' + '/' + convoID + '/' + resource,
       login: helpers.HEADER_USER
     }).then(
       (response) => {
         // Log messages GET response
         console.log(JSON.parse(response.body))
 
-        context.commit('setMessages', {convoId, messages: JSON.parse(response.body)})
+        context.commit('setMessages', {convoID, messages: JSON.parse(response.body)})
         context.commit('setMessageError', {text: 'Everything is okay!'})
       }, (err) => {
         context.commit('setMessageError', {text: 'Failed to get messages: ' + JSON.stringify(err)})
@@ -40,12 +40,11 @@ const actions = {
     )
   },
 
-  sendMessage (context, {convoIndex, content}) {
-    let convoId = context.rootState.convos.content[convoIndex].id
+  sendMessage (context, {convoID, content}) {
     let formattedMessage = JSON.stringify({content: content})
 
     // Send message on websocket
-    context.rootState.convos.websockets[convoId].send(formattedMessage)
+    context.rootState.convos.websockets[convoID].send(formattedMessage)
 
     // Create a fully formatted message to add to the store
     let message = {
@@ -53,12 +52,11 @@ const actions = {
       sender: context.rootState.profile.content.name,
       timestamp: helpers.getRFCTime()
     }
-    context.commit('pushMessage', {message, convoId})
+    context.commit('pushMessage', {message, convoID})
   },
 
-  receiveMessage (context, {convoIndex, message}) {
-    let convoId = context.rootState.convos.content[convoIndex].id
-    context.commit('pushMessage', {message, convoId})
+  receiveMessage (context, {convoID, message}) {
+    context.commit('pushMessage', {message, convoID})
   },
 
   initAllMessageArrays (context, convos) {
@@ -79,12 +77,12 @@ const mutations = {
     state.content = messages
   },
 
-  setMessages (state, {convoId, messages}) {
-    state.content[convoId] = messages
+  setMessages (state, {convoID, messages}) {
+    state.content[convoID] = messages
   },
 
-  pushMessage (state, {message, convoId}) {
-    state.content[convoId].push(message)
+  pushMessage (state, {message, convoID}) {
+    state.content[convoID].push(message)
   },
 
   setMessageError (state, error) {
