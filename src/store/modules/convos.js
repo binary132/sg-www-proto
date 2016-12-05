@@ -13,6 +13,22 @@ const actions = {
     context.dispatch('getAllConvos')
   },
 
+  convoNotif (context, convo) {
+    context.dispatch('setConvo', convo)
+  },
+
+  convoDeletedNotif (context, id) {
+    context.dispatch('removeConvo', id)
+  },
+
+  convoConnectedNotif (context, {userID, convoID}) {
+    console.log('user ' + userID + ' joined convo ' + convoID)
+  },
+
+  convoDisconnectedNotif (context, {userID, convoID}) {
+    console.log('user ' + userID + ' left convo ' + convoID)
+  },
+
   getAllConvos (context) {
     context.dispatch('get', {
       resource,
@@ -49,6 +65,16 @@ const actions = {
         console.log(helpers.HEADER_USER)
         context.commit('setConvoError', {text: 'Something went wrong', error: err})
       })
+  },
+
+  setConvo (context, convo) {
+    // If it already exists, update it
+    // Otherwise, push the new one
+    context.commit('pushConvo', convo)
+    context.dispatch('initMessageArray', convo.id)
+  },
+
+  removeConvo (context, id) {
   },
 
   deleteConvo (context, index) {
