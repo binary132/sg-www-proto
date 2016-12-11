@@ -1,9 +1,10 @@
 import * as helpers from '../helpers'
+import Vue from 'vue'
 
 const resource = 'convos'
 
 const state = {
-  content: [],
+  content: {},
   websockets: {},
   error: {}
 }
@@ -77,8 +78,7 @@ const actions = {
   removeConvo (context, id) {
   },
 
-  deleteConvo (context, index) {
-    let id = context.state.content[index].id
+  deleteConvo (context, id) {
     context.dispatch('DELETE', {
       resource,
       id,
@@ -86,7 +86,7 @@ const actions = {
     }).then(
       (response) => {
         context.commit('deleteWebsocket', id)
-        context.commit('deleteConvo', index)
+        context.commit('deleteConvo', id)
         context.dispatch('deleteMessageArray', id)
         context.commit('setConvoError', {text: 'Everything is okay!'})
       }, (err) => {
@@ -100,8 +100,8 @@ const actions = {
     context.commit('setWebsocket', args)
   },
 
-  closeWebsocket (context, convoId) {
-    context.commit('deleteWebsocket', convoId)
+  closeWebsocket (context, convoID) {
+    context.commit('deleteWebsocket', convoID)
   }
 }
 
@@ -110,28 +110,30 @@ const mutations = {
     state.content.push(convo)
   },
 
-  deleteConvo (state, index) {
-    state.content.splice(index, 1)
+  deleteConvo (state, id) {
+    delete state.content[id]
   },
 
   setAllConvos (state, convos) {
-    state.content = convos
+    convos.forEach((convo) => {
+      Vue.set(state.content, convo.id, convo)
+    })
   },
 
   setConvoError (state, error) {
     state.error = error
   },
 
-  setWebsocket (state, {websocket, convoId}) {
-    state.websockets[convoId] = websocket
+  setWebsocket (state, {websocket, convoID}) {
+    state.websockets[convoID] = websocket
   },
 
-  deleteWebsocket (state, convoId) {
-    let ws = state.websockets[convoId]
+  deleteWebsocket (state, convoID) {
+    let ws = state.websockets[convoID]
     if (ws !== null && ws !== undefined) {
       ws.close()
-      delete state.websockets[convoId]
-      console.log('Deleted WS ' + convoId)
+      delete state.websockets[convoID]
+      console.log('Deleted WS ' + convoID)
     }
   }
 }
