@@ -47,7 +47,6 @@ export const PUT = (context, {resource, id, login}) => {
     case helpers.HEADER_USER:
       let header = {'Authorization': 'Bearer ' + context.state.tokens.content.token}
       return Vue.http.put(context.state.backend + '/' + resource + '/' + id, {headers: header})
-
     default:
       // console.log('PUT without header')
       return Vue.http.put(context.state.backend + '/' + resource + '/' + id)
