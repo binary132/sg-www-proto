@@ -58,7 +58,7 @@ const actions = {
       (response) => {
         let convo = JSON.parse(response.body)
         console.log('insert conversation: ' + convo)
-        context.commit('pushConvo', convo)
+        context.commit('insertConvo', convo)
         context.commit('setConvoError', {text: 'Everything is okay!'})
         context.dispatch('initMessageArray', convo.id)
       }, (err) => {
@@ -69,9 +69,8 @@ const actions = {
   },
 
   setConvo (context, convo) {
-    // If it already exists, update it
-    // Otherwise, push the new one
-    context.commit('pushConvo', convo)
+    // If it already exists, update it; otherwise, insert the new one.
+    context.commit('insertConvo', convo)
     context.dispatch('initMessageArray', convo.id)
   },
 
@@ -106,8 +105,8 @@ const actions = {
 }
 
 const mutations = {
-  pushConvo (state, convo) {
-    state.content.push(convo)
+  insertConvo (state, convo) {
+    Vue.set(state.content, convo.id, convo)
   },
 
   deleteConvo (state, id) {
@@ -116,6 +115,7 @@ const mutations = {
 
   setAllConvos (state, convos) {
     convos.forEach((convo) => {
+      console.log('setting convo ' + convo.id)
       Vue.set(state.content, convo.id, convo)
     })
   },
@@ -124,11 +124,13 @@ const mutations = {
     state.error = error
   },
 
-  setWebsocket (state, {websocket, convoID}) {
-    state.websockets[convoID] = websocket
+  setWebsocket (state, {websocket, newID}) {
+    console.log('setWebsocket: ' + newID)
+    Vue.set(state.websockets, newID, websocket)
   },
 
   deleteWebsocket (state, convoID) {
+    console.log('deleteWebsocket: ' + convoID)
     let ws = state.websockets[convoID]
     if (ws !== null && ws !== undefined) {
       ws.close()

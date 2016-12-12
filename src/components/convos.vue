@@ -81,7 +81,7 @@ export default {
     },
 
     websocketReady: function () {
-      if (this.currentIndex >= 0) {
+      if (this.currentID !== '') {
         return this.$store.state.convos.websockets[this.currentID] !== undefined
       } else {
         return false
@@ -117,11 +117,14 @@ export default {
     },
 
     deleteConvo: function (id) {
-      this.$store.dispatch('deleteConvo', id)
-
-      if (id === this.currentID) {
-        this.unsetActiveConvo()
-      }
+      this.$store.dispatch('deleteConvo', id).then(
+      (response) => {
+        if (id === this.currentID) {
+          this.unsetActiveConvo()
+        }
+      }, (err) => {
+        console.log('failed to delete convo: ' + JSON.stringify(err))
+      })
     },
 
     setActiveConvo: function (newID) {
@@ -153,7 +156,7 @@ export default {
       this.$store.dispatch('openWebsocket', {websocket, newID})
 
       // Set active convo to current index
-      this.currentIndex = newID
+      this.currentID = newID
     },
 
     unsetActiveConvo: function () {
