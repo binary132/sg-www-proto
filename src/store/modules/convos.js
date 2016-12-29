@@ -58,7 +58,6 @@ const actions = {
     }).then(
       (response) => {
         let convo = JSON.parse(response.body)
-        console.log('insert conversation: ' + convo)
         context.commit('insertConvo', convo)
         context.commit('setConvoError', {text: 'Everything is okay!'})
         context.dispatch('initMessageArray', convo.id)
@@ -138,7 +137,6 @@ const mutations = {
 
   setAllConvos (state, convos) {
     convos.forEach((convo) => {
-      console.log('setting convo ' + convo.id)
       Vue.set(state.content, convo.id, convo)
     })
   },
@@ -148,12 +146,10 @@ const mutations = {
   },
 
   setWebsocket (state, {websocket, newID}) {
-    console.log('setWebsocket: ' + newID)
     Vue.set(state.websockets, newID, websocket)
   },
 
   deleteWebsocket (state, convoID) {
-    console.log('deleteWebsocket: ' + convoID)
     let ws = state.websockets[convoID]
     if (ws !== null && ws !== undefined) {
       ws.close()
