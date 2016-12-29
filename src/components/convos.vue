@@ -36,7 +36,7 @@
       <div v-if="currentID !== ''">
         <h2>{{ convos[currentID].name }}</h2>
         <p v-if="messages.length === 0">No Messages in this Conversation. Send one to begin.</p>
-        <div class="messages" v-if="this.currentID !== ''">
+        <div class="messages" v-if="currentID !== ''">
           <div v-for="item in messages">
             {{ item.sender }} » {{ item.content }}
           </div>
@@ -66,8 +66,7 @@ export default {
     return {
       msgEntry: '',
       convoNameEntry: '',
-      convoMemberEntry: '',
-      currentID: ''
+      convoMemberEntry: ''
     }
   },
 
@@ -90,6 +89,10 @@ export default {
 
     loggedIn: function () {
       return this.$store.getters.loggedIn
+    },
+
+    currentID: function () {
+      return this.$store.state.convos.currentID
     }
   },
 
@@ -120,7 +123,7 @@ export default {
       this.$store.dispatch('deleteConvo', id).then(
       (response) => {
         if (id === this.currentID) {
-          this.unsetActiveConvo()
+          this.$store.dispatch('unsetActiveConvo')
         }
       }, (err) => {
         console.log('failed to delete convo: ' + JSON.stringify(err))
@@ -156,12 +159,7 @@ export default {
       this.$store.dispatch('openWebsocket', {websocket, newID})
 
       // Set active convo to current index
-      this.currentID = newID
-    },
-
-    unsetActiveConvo: function () {
-      this.$store.dispatch('closeWebsocket', this.currentID)
-      this.currentID = ''
+      this.$store.dispatch('setCurrentID', newID)
     }
   }
 }

@@ -5,6 +5,7 @@ const resource = 'convos'
 
 const state = {
   content: {},
+  currentID: '',
   websockets: {},
   error: {}
 }
@@ -75,6 +76,15 @@ const actions = {
   },
 
   removeConvo (context, id) {
+    if (context.state.currentID === id) {
+      context.dispatch('unsetActiveConvo').then(
+        (result) => context.dispatch('removeConvo', id),
+        (err) => console.log('removing failed: ' + JSON.stringify(err))
+      )
+    }
+
+    context.commit('deleteConvo', id)
+    context.commit('deleteWebsocket', id)
   },
 
   deleteConvo (context, id) {
@@ -84,6 +94,10 @@ const actions = {
       login: helpers.HEADER_USER
     }).then(
       (response) => {
+        if (id === context.state.currentID) {
+          context.dispatch('unsetActiveConvo', id)
+        }
+
         context.commit('deleteWebsocket', id)
         context.commit('deleteConvo', id)
         context.dispatch('deleteMessageArray', id)
@@ -101,6 +115,15 @@ const actions = {
 
   closeWebsocket (context, convoID) {
     context.commit('deleteWebsocket', convoID)
+  },
+
+  setCurrentID (context, id) {
+    context.commit('setCurrentID', id)
+  },
+
+  unsetActiveConvo (context) {
+    context.commit('deleteWebsocket', context.state.currentID)
+    context.commit('setCurrentID', '')
   }
 }
 
@@ -110,7 +133,7 @@ const mutations = {
   },
 
   deleteConvo (state, id) {
-    delete state.content[id]
+    Vue.delete(state.content, id)
   },
 
   setAllConvos (state, convos) {
@@ -134,9 +157,12 @@ const mutations = {
     let ws = state.websockets[convoID]
     if (ws !== null && ws !== undefined) {
       ws.close()
-      delete state.websockets[convoID]
-      console.log('Deleted WS ' + convoID)
+      Vue.delete(state.websockets, convoID)
     }
+  },
+
+  setCurrentID (state, id) {
+    state.currentID = id
   }
 }
 
