@@ -26,7 +26,9 @@
             <span v-on:click="setActiveConvo(id)" class="item">
               {{item.name}}
             </span>
-            <div v-on:click="deleteConvo(id)" class="delete">
+            <div v-if="item.owner === username"
+                 v-on:click="deleteConvo(id)"
+                 class="delete">
               ×
             </div>
           </li>
@@ -73,6 +75,10 @@ export default {
   computed: {
     convos: function () {
       return this.$store.state.convos.content
+    },
+
+    username: function () {
+      return this.$store.getters.username
     },
 
     messages: function () {
