@@ -9,6 +9,8 @@
 
     <login></login>
 
+    <notifs v-if="loggedIn"></notifs>
+
     <server-source></server-source>
 
   </div>
@@ -24,6 +26,7 @@ import mainView from './components/mainView'
 import commandBar from './components/commandBar'
 import metaPalette from './components/metaPalette'
 import login from './components/login'
+import notifs from './components/notifs'
 import serverSource from './components/serverSource'
 
 import store from './store/store'
@@ -36,7 +39,14 @@ export default {
     commandBar,
     metaPalette,
     login,
+    notifs,
     serverSource
+  },
+
+  computed: {
+    loggedIn: function () {
+      return this.$store.getters.loggedIn
+    }
   },
 
   store

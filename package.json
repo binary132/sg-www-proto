@@ -12,6 +12,7 @@
     "lint": "eslint --ext .js,.vue src test/unit/specs"
   },
   "dependencies": {
+    "eslint-plugin-promise": "^3.4.0",
     "sjcl": "^1.0.6",
     "vue": "^2.0.1",
     "vue-resource": "^1.0.3",

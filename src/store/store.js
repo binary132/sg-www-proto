@@ -11,6 +11,7 @@ import * as getters from './globalGetters'
 // Import store modules (collections)
 import source from './modules/source'
 import tokens from './modules/tokens'
+import notifs from './modules/notifs'
 import profile from './modules/profile'
 import convos from './modules/convos'
 import messages from './modules/messages'
@@ -31,6 +32,7 @@ export default new Vuex.Store({
   modules: {
     source,
     tokens,
+    notifs,
     profile,
     convos,
     messages

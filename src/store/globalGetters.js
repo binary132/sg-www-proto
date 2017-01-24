@@ -10,3 +10,7 @@ export const tokenURL = state => {
 export const loggedIn = state => {
   return Object.keys(state.profile.content).length !== 0
 }
+
+export const username = state => {
+  return state.profile.content.name
+}

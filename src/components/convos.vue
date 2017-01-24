@@ -21,24 +21,26 @@
       <div class="list">
         <p v-if="Object.keys(convos).length === 0">No Conversations. Create one to begin.</p>
         <ul v-if="Object.keys(convos).length > 0">
-          <li v-for="(item, index) in convos"
-            v-bind:class="index === currentIndex ? 'active' : ''">
-            <span v-on:click="setActiveConvo(index)" class="item">
+          <li v-for="(item, id) in convos"
+            v-bind:class="id === currentID ? 'active' : ''">
+            <span v-on:click="setActiveConvo(id)" class="item">
               {{item.name}}
             </span>
-            <div v-on:click="deleteConvo(index)" class="delete">
+            <div v-if="item.owner === username"
+                 v-on:click="deleteConvo(id)"
+                 class="delete">
               ×
             </div>
           </li>
         </ul>
       </div>
 
-      <div v-if="currentIndex >= 0">
-        <h2>{{ convos[currentIndex].name }}</h2>
-        <p v-if="Object.keys(messages).length === 0">No Messages in this Conversation. Send one to begin.</p>
-        <div class="messages" v-if="currentIndex >= 0">
-          <div v-for="item in messages[convos[currentIndex].id]">
-            {{ item.sender}} » {{ item.content }}
+      <div v-if="currentID !== ''">
+        <h2>{{ convos[currentID].name }}</h2>
+        <p v-if="messages.length === 0">No Messages in this Conversation. Send one to begin.</p>
+        <div class="messages" v-if="currentID !== ''">
+          <div v-for="item in messages">
+            {{ item.sender }} » {{ item.content }}
           </div>
 
           <input type="text"
@@ -66,8 +68,7 @@ export default {
     return {
       msgEntry: '',
       convoNameEntry: '',
-      convoMemberEntry: '',
-      currentIndex: -1
+      convoMemberEntry: ''
     }
   },
 
@@ -76,13 +77,17 @@ export default {
       return this.$store.state.convos.content
     },
 
+    username: function () {
+      return this.$store.getters.username
+    },
+
     messages: function () {
-      return this.$store.state.messages.content
+      return this.$store.state.messages.content[this.currentID]
     },
 
     websocketReady: function () {
-      if (this.currentIndex >= 0) {
-        return this.$store.state.convos.websockets[this.convos[this.currentIndex].id] !== undefined
+      if (this.currentID !== '') {
+        return this.$store.state.convos.websockets[this.currentID] !== undefined
       } else {
         return false
       }
@@ -90,17 +95,21 @@ export default {
 
     loggedIn: function () {
       return this.$store.getters.loggedIn
+    },
+
+    currentID: function () {
+      return this.$store.state.convos.currentID
     }
   },
 
   methods: {
     sendMessage: function () {
-      this.$store.dispatch('sendMessage', {convoIndex: this.currentIndex, content: this.msgEntry})
+      this.$store.dispatch('sendMessage', {convoID: this.currentID, content: this.msgEntry})
       this.msgEntry = ''
     },
 
     receiveMessage: function (event) {
-      this.$store.dispatch('receiveMessage', {convoIndex: this.currentIndex, message: JSON.parse(event.data)})
+      this.$store.dispatch('receiveMessage', {convoID: this.currentID, message: JSON.parse(event.data)})
     },
 
     createConvo: function () {
@@ -116,33 +125,33 @@ export default {
       this.convoMemberEntry = ''
     },
 
-    deleteConvo: function (index) {
-      this.$store.dispatch('deleteConvo', index)
-
-      if (index === this.currentIndex) {
-        this.unsetActiveConvo()
-      }
+    deleteConvo: function (id) {
+      this.$store.dispatch('deleteConvo', id).then(
+      (response) => {
+        if (id === this.currentID) {
+          this.$store.dispatch('unsetActiveConvo')
+        }
+      }, (err) => {
+        console.log('failed to delete convo: ' + JSON.stringify(err))
+      })
     },
 
-    setActiveConvo: function (newIndex) {
+    setActiveConvo: function (newID) {
       // If re-selected current convo, just return
-      if (newIndex === this.currentIndex) return
+      if (newID === this.currentID) return
 
       // If a convo was previously active, then clean up its websocket.
-      if (this.currentIndex !== -1) {
-        this.$store.dispatch('closeWebsocket', this.convos[this.currentIndex].id)
+      if (this.currentID !== '') {
+        this.$store.dispatch('closeWebsocket', this.currentID)
       }
 
-      // Get id of the new convo
-      let convoId = this.convos[newIndex].id
-
       // Get convo messages from server
-      this.$store.dispatch('getMessages', convoId)
+      this.$store.dispatch('getMessages', newID)
 
       // Create Websocket
       let websocket = new window.WebSocket(
         'ws://' + window.location.host + this.$store.state.backend +
-        '/convos/' + convoId + '/start',
+        '/convos/' + newID + '/start',
         'Bearer+' + this.$store.getters.tokenURL
       )
 
@@ -153,15 +162,10 @@ export default {
       websocket.onmessage = this.receiveMessage
       console.log('Opening websocket connection...')
 
-      this.$store.dispatch('openWebsocket', {websocket, convoId})
+      this.$store.dispatch('openWebsocket', {websocket, newID})
 
       // Set active convo to current index
-      this.currentIndex = newIndex
-    },
-
-    unsetActiveConvo: function () {
-      this.$store.dispatch('closeWebsocket', this.convos[this.currentIndex].id)
-      this.currentIndex = -1
+      this.$store.dispatch('setCurrentID', newID)
     }
   }
 }
