@@ -19,6 +19,10 @@ const actions = {
     context.dispatch('setConvo', convo)
   },
 
+  convoRemovedNotif (context, id) {
+    context.dispatch('removeConvo', id)
+  },
+
   convoDeletedNotif (context, id) {
     context.dispatch('removeConvo', id)
   },

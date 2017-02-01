@@ -1,6 +1,7 @@
 let cases = {
   'convos': 'convoNotif',
   'convo-deleted': 'convoDeletedNotif',
+  'convo-removed': 'convoRemovedNotif',
   'convo-connected': 'convoConnectedNotif',
   'convo-disconnected': 'convoDisconnectedNotif'
 }
